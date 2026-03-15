@@ -14,13 +14,232 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      auctions: {
+        Row: {
+          admin_id: string
+          budget_per_team: number
+          created_at: string
+          current_player_id: string | null
+          id: string
+          join_code: string
+          status: string
+          timer_ends_at: string | null
+          title: string
+        }
+        Insert: {
+          admin_id: string
+          budget_per_team?: number
+          created_at?: string
+          current_player_id?: string | null
+          id?: string
+          join_code: string
+          status?: string
+          timer_ends_at?: string | null
+          title: string
+        }
+        Update: {
+          admin_id?: string
+          budget_per_team?: number
+          created_at?: string
+          current_player_id?: string | null
+          id?: string
+          join_code?: string
+          status?: string
+          timer_ends_at?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_current_player"
+            columns: ["current_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bids: {
+        Row: {
+          amount: number
+          auction_id: string
+          created_at: string
+          id: string
+          player_id: string
+          team_id: string
+        }
+        Insert: {
+          amount: number
+          auction_id: string
+          created_at?: string
+          id?: string
+          player_id: string
+          team_id: string
+        }
+        Update: {
+          amount?: number
+          auction_id?: string
+          created_at?: string
+          id?: string
+          player_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bids_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          auction_id: string
+          base_price: number
+          created_at: string
+          current_highest_bid: number | null
+          current_highest_bidder_id: string | null
+          gender: string
+          id: string
+          name: string
+          skill_tier: string | null
+          status: string
+          team_id: string | null
+        }
+        Insert: {
+          auction_id: string
+          base_price?: number
+          created_at?: string
+          current_highest_bid?: number | null
+          current_highest_bidder_id?: string | null
+          gender: string
+          id?: string
+          name: string
+          skill_tier?: string | null
+          status?: string
+          team_id?: string | null
+        }
+        Update: {
+          auction_id?: string
+          base_price?: number
+          created_at?: string
+          current_highest_bid?: number | null
+          current_highest_bidder_id?: string | null
+          gender?: string
+          id?: string
+          name?: string
+          skill_tier?: string | null
+          status?: string
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "players_current_highest_bidder_id_fkey"
+            columns: ["current_highest_bidder_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "players_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          auction_id: string
+          boys_count: number
+          captain_name: string
+          created_at: string
+          girls_count: number
+          id: string
+          name: string
+          purse_balance: number
+        }
+        Insert: {
+          auction_id: string
+          boys_count?: number
+          captain_name: string
+          created_at?: string
+          girls_count?: number
+          id?: string
+          name: string
+          purse_balance?: number
+        }
+        Update: {
+          auction_id?: string
+          boys_count?: number
+          captain_name?: string
+          created_at?: string
+          girls_count?: number
+          id?: string
+          name?: string
+          purse_balance?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      mark_unsold: { Args: { p_auction_id: string }; Returns: undefined }
+      pause_auction_timer: {
+        Args: { p_auction_id: string }
+        Returns: undefined
+      }
+      place_bid: {
+        Args: {
+          p_amount: number
+          p_auction_id: string
+          p_player_id: string
+          p_team_id: string
+        }
+        Returns: Json
+      }
+      process_sale: { Args: { p_auction_id: string }; Returns: Json }
+      set_active_player: {
+        Args: { p_auction_id: string; p_player_id: string }
+        Returns: undefined
+      }
+      start_auction_timer: {
+        Args: { p_auction_id: string; p_seconds?: number }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
