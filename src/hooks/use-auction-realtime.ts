@@ -15,7 +15,11 @@ export interface AuctionRealtimeData {
   allPlayers: Player[];
 }
 
-export function useAuctionRealtime(auctionId: string | undefined) {
+export interface AuctionRealtimeResult extends AuctionRealtimeData {
+  refetch: () => Promise<void>;
+}
+
+export function useAuctionRealtime(auctionId: string | undefined): AuctionRealtimeResult {
   const [data, setData] = useState<AuctionRealtimeData>({
     auction: null,
     teams: [],
@@ -61,5 +65,8 @@ export function useAuctionRealtime(auctionId: string | undefined) {
     return () => { supabase.removeChannel(channel); };
   }, [auctionId, fetchAll]);
 
-  return data;
+  return {
+    ...data,
+    refetch: fetchAll,
+  };
 }
