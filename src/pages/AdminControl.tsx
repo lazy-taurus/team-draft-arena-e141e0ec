@@ -19,7 +19,7 @@ export default function AdminControl() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { auction, teams, currentPlayer, recentBids, allPlayers } = useAuctionRealtime(auctionId);
+  const { auction, teams, currentPlayer, recentBids, allPlayers, refetch } = useAuctionRealtime(auctionId);
   const secondsLeft = useCountdown(auction?.timer_ends_at);
 
   const [searchQuery, setSearchQuery] = useState('');

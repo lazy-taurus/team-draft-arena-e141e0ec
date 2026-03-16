@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 export default function CaptainBid() {
   const { id: auctionId } = useParams<{ id: string }>();
   const session = getCaptainSession(auctionId);
-  const { auction, teams, currentPlayer, allPlayers } = useAuctionRealtime(auctionId);
+  const { auction, teams, currentPlayer, allPlayers, refetch } = useAuctionRealtime(auctionId);
   const secondsLeft = useCountdown(auction?.timer_ends_at);
   const { toast } = useToast();
   const [customBid, setCustomBid] = useState('');
@@ -53,6 +53,9 @@ export default function CaptainBid() {
       const result = data as any;
       if (result && !result.success) {
         toast({ title: 'Bid Rejected', description: result.error, variant: 'destructive' });
+      } else {
+        // Immediately sync timer reset from database
+        await refetch();
       }
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
