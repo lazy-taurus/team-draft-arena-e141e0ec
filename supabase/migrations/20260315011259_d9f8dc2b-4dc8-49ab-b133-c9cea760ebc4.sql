@@ -19,8 +19,8 @@ CREATE TABLE public.teams (
   name TEXT NOT NULL,
   captain_name TEXT NOT NULL,
   purse_balance INTEGER NOT NULL DEFAULT 10000 CHECK (purse_balance >= 0),
-  boys_count INTEGER NOT NULL DEFAULT 0 CHECK (boys_count <= 7),
-  girls_count INTEGER NOT NULL DEFAULT 0 CHECK (girls_count <= 3),
+  boys_count INTEGER NOT NULL DEFAULT 0,
+  girls_count INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -31,7 +31,7 @@ CREATE TABLE public.players (
   name TEXT NOT NULL,
   gender TEXT NOT NULL CHECK (gender IN ('Male', 'Female')),
   skill_tier TEXT,
-  base_price INTEGER NOT NULL DEFAULT 200,
+  base_price INTEGER NOT NULL DEFAULT 100,
   status TEXT NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'on_block', 'sold', 'unsold')),
   team_id UUID REFERENCES public.teams(id),
   current_highest_bid INTEGER,
