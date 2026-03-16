@@ -12,11 +12,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Upload, Plus, Rocket, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import type { Database } from '@/integrations/supabase/types';
 
-type Player = Database['public']['Tables']['players']['Row'];
-type Team = Database['public']['Tables']['teams']['Row'];
+type Player  = Database['public']['Tables']['players']['Row'];
+type Team    = Database['public']['Tables']['teams']['Row'];
 type Auction = Database['public']['Tables']['auctions']['Row'];
+
+const FIXED_BASE_PRICE = 100;
+const FIXED_SKILL_TIER = 'player';
 
 export default function SetupPage() {
   const { id: auctionId } = useParams<{ id: string }>();
@@ -24,13 +28,11 @@ export default function SetupPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [auction, setAuction] = useState<Auction | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [newPlayerName, setNewPlayerName] = useState('');
+  const [auction, setAuction]           = useState<Auction | null>(null);
+  const [players, setPlayers]           = useState<Player[]>([]);
+  const [teams, setTeams]               = useState<Team[]>([]);
+  const [newPlayerName, setNewPlayerName]   = useState('');
   const [newPlayerGender, setNewPlayerGender] = useState<'Male' | 'Female'>('Male');
-  const [newPlayerTier, setNewPlayerTier] = useState('');
-  const [newPlayerPrice, setNewPlayerPrice] = useState(200);
 
   const fetchData = useCallback(async () => {
     if (!auctionId) return;
@@ -50,77 +52,111 @@ export default function SetupPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !auctionId) return;
+  // ── Shared insert helper ──────────────────────────────────────────────────
+  const insertPlayers = async (rows: { name: string; gender: 'Male' | 'Female' }[]) => {
+    const inserts = rows
+      .filter(r => r.name.trim())
+      .map(r => ({
+        auction_id:  auctionId!,
+        name:        r.name.trim(),
+        gender:      r.gender,
+        skill_tier:  FIXED_SKILL_TIER,
+        base_price:  FIXED_BASE_PRICE,
+      }));
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (h: string) => h.trim(),
-      complete: async (results) => {
-        const rows = results.data as Record<string, string>[];
-        const inserts = rows.map(row => {
-          const name = row['Name'] || row['name'] || row['Player Name'] || row['player_name'] || '';
-          const gender = row['Gender'] || row['gender'] || row['Category'] || row['category'] || 'Male';
-          const tier = row['Skill Tier'] || row['skill_tier'] || row['Tier'] || row['tier'] || '';
-          const price = parseInt(row['Base Price'] || row['base_price'] || row['Price'] || row['price'] || '200') || 200;
-          return {
-            auction_id: auctionId,
-            name: name.trim(),
-            gender: (gender.trim() === 'Female' ? 'Female' : 'Male') as 'Male' | 'Female',
-            skill_tier: tier.trim() || null,
-            base_price: price,
-          };
-        }).filter(p => p.name);
+    if (inserts.length === 0) {
+      toast({ title: 'No valid rows', description: 'Make sure the file has Name and Gender columns.', variant: 'destructive' });
+      return;
+    }
 
-        if (inserts.length === 0) {
-          toast({ title: 'No valid rows', description: 'Check your CSV columns.', variant: 'destructive' });
-          return;
-        }
-
-        const { error } = await supabase.from('players').insert(inserts);
-        if (error) {
-          toast({ title: 'Upload Error', description: error.message, variant: 'destructive' });
-        } else {
-          toast({ title: 'Success', description: `${inserts.length} players added to pool.` });
-          fetchData();
-        }
-      },
-      error: (err) => {
-        toast({ title: 'Parse Error', description: err.message, variant: 'destructive' });
-      },
-    });
-    // Reset input
-    e.target.value = '';
+    const { error } = await supabase.from('players').insert(inserts);
+    if (error) {
+      toast({ title: 'Upload Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: `${inserts.length} players added to pool.` });
+      fetchData();
+    }
   };
 
+  // ── Parse rows from a flat array of objects ───────────────────────────────
+  const parseRows = (data: Record<string, string>[]) =>
+    data.map(row => {
+      const lower = Object.fromEntries(
+        Object.entries(row).map(([k, v]) => [k.toLowerCase().trim(), String(v).trim()])
+      );
+      const get = (...keys: string[]) => keys.map(k => lower[k]).find(Boolean) ?? '';
+      const name   = get('name', 'player name', 'player_name', 'full name', 'fullname');
+      const gender = get('gender', 'category', 'sex') || 'Male';
+      return {
+        name,
+        gender: (gender.trim() === 'Female' ? 'Female' : 'Male') as 'Male' | 'Female',
+      };
+    });
+
+  // ── File upload handler (CSV + Excel) ─────────────────────────────────────
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !auctionId) return;
+    e.target.value = '';
+
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+
+    if (isExcel) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const wb   = XLSX.read(evt.target?.result, { type: 'array' });
+          const ws   = wb.Sheets[wb.SheetNames[0]];
+          const rawData = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '' });
+          // Trim whitespace from header keys (e.g. "Name " → "Name")
+          const data = rawData.map(row =>
+            Object.fromEntries(Object.entries(row).map(([k, v]) => [k.trim(), v]))
+          );
+          insertPlayers(parseRows(data));
+        } catch {
+          toast({ title: 'Parse Error', description: 'Could not read the Excel file.', variant: 'destructive' });
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (h: string) => h.trim(),
+        complete: (results) => {
+          const trimmed = (results.data as Record<string, string>[]).map(row =>
+            Object.fromEntries(Object.entries(row).map(([k, v]) => [k.trim(), v]))
+          );
+          insertPlayers(parseRows(trimmed));
+        },
+        error: (err) => toast({ title: 'Parse Error', description: err.message, variant: 'destructive' }),
+      });
+    }
+  };
+
+  // ── Add single player ─────────────────────────────────────────────────────
   const addPlayer = async () => {
     if (!auctionId || !newPlayerName.trim()) return;
     const { error } = await supabase.from('players').insert({
       auction_id: auctionId,
-      name: newPlayerName.trim(),
-      gender: newPlayerGender,
-      skill_tier: newPlayerTier || null,
-      base_price: newPlayerPrice,
+      name:       newPlayerName.trim(),
+      gender:     newPlayerGender,
+      skill_tier: FIXED_SKILL_TIER,
+      base_price: FIXED_BASE_PRICE,
     });
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       setNewPlayerName('');
-      setNewPlayerTier('');
-      setNewPlayerPrice(200);
+      setNewPlayerGender('Male');
       fetchData();
     }
   };
 
   const deletePlayer = async (id: string) => {
     const { error } = await supabase.from('players').delete().eq('id', id);
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      fetchData();
-    }
+    if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    else fetchData();
   };
 
   const goLive = async () => {
@@ -137,7 +173,9 @@ export default function SetupPage() {
       <header className="border-b border-border px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold">{auction.title}</h1>
-          <p className="text-sm text-muted-foreground">Code: <span className="font-mono font-bold">{auction.join_code}</span></p>
+          <p className="text-sm text-muted-foreground">
+            Code: <span className="font-mono font-bold">{auction.join_code}</span>
+          </p>
         </div>
         <Button onClick={goLive} className="bg-success hover:bg-success/90 text-success-foreground">
           <Rocket className="mr-2 h-4 w-4" /> Initialize Live Auction
@@ -151,58 +189,69 @@ export default function SetupPage() {
             <TabsTrigger value="players">Player Pool ({players.length})</TabsTrigger>
           </TabsList>
 
+          {/* ── Teams tab ── */}
           <TabsContent value="teams" className="mt-4">
             <div className="grid gap-4 md:grid-cols-2">
               {teams.map(t => (
                 <Card key={t.id}>
                   <CardHeader>
                     <CardTitle className="text-base">{t.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">Captain: {t.captain_name} · Budget: ₹{t.purse_balance.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Captain: {t.captain_name} · Budget: ₹{t.purse_balance.toLocaleString()}
+                    </p>
                   </CardHeader>
                 </Card>
               ))}
               {teams.length === 0 && (
                 <p className="text-muted-foreground col-span-2 text-center py-8">
-                  Teams will appear here when captains join using code <span className="font-mono font-bold">{auction.join_code}</span>
+                  Teams will appear here when captains join using code{' '}
+                  <span className="font-mono font-bold">{auction.join_code}</span>
                 </p>
               )}
             </div>
           </TabsContent>
 
+          {/* ── Players tab ── */}
           <TabsContent value="players" className="mt-4 space-y-6">
+
+            {/* File upload */}
             <Card>
               <CardContent className="pt-6">
                 <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-8 cursor-pointer hover:border-primary transition-colors">
                   <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">Drop CSV file or click to upload</span>
-                  <span className="text-xs text-muted-foreground mt-1">Columns: Name, Gender, Skill Tier, Base Price</span>
-                  <input type="file" accept=".csv" onChange={handleCSVUpload} className="hidden" />
+                  <span className="text-sm text-muted-foreground">Drop a file or click to upload</span>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    CSV or Excel (.xlsx / .xls) — columns: <span className="font-mono">Name, Gender</span>
+                  </span>
+                  <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} className="hidden" />
                 </label>
               </CardContent>
             </Card>
 
+            {/* Manual add */}
             <Card>
               <CardHeader><CardTitle className="text-base">Add Player Manually</CardTitle></CardHeader>
               <CardContent>
-                <div className="grid gap-3 md:grid-cols-5 items-end">
-                  <div className="space-y-1">
+                <div className="flex gap-3 items-end">
+                  <div className="space-y-1 flex-1">
                     <Label className="text-xs">Name</Label>
-                    <Input value={newPlayerName} onChange={e => setNewPlayerName(e.target.value)} placeholder="Player name" />
+                    <Input
+                      value={newPlayerName}
+                      onChange={e => setNewPlayerName(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && addPlayer()}
+                      placeholder="Player name"
+                    />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 w-36">
                     <Label className="text-xs">Gender</Label>
-                    <select value={newPlayerGender} onChange={e => setNewPlayerGender(e.target.value as 'Male' | 'Female')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    <select
+                      value={newPlayerGender}
+                      onChange={e => setNewPlayerGender(e.target.value as 'Male' | 'Female')}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
                     </select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Skill Tier</Label>
-                    <Input value={newPlayerTier} onChange={e => setNewPlayerTier(e.target.value)} placeholder="e.g. Gold" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Base Price</Label>
-                    <Input type="number" value={newPlayerPrice} onChange={e => setNewPlayerPrice(Number(e.target.value))} />
                   </div>
                   <Button onClick={addPlayer} disabled={!newPlayerName.trim()}>
                     <Plus className="mr-1 h-4 w-4" /> Add
@@ -211,6 +260,7 @@ export default function SetupPage() {
               </CardContent>
             </Card>
 
+            {/* Player table */}
             {players.length > 0 && (
               <Card>
                 <CardContent className="pt-4">
@@ -219,8 +269,6 @@ export default function SetupPage() {
                       <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Gender</TableHead>
-                        <TableHead>Tier</TableHead>
-                        <TableHead>Base Price</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="w-10"></TableHead>
                       </TableRow>
@@ -230,12 +278,14 @@ export default function SetupPage() {
                         <TableRow key={p.id}>
                           <TableCell className="font-medium">{p.name}</TableCell>
                           <TableCell>{p.gender}</TableCell>
-                          <TableCell>{p.skill_tier || '—'}</TableCell>
-                          <TableCell className="font-mono">₹{p.base_price}</TableCell>
                           <TableCell>{p.status}</TableCell>
                           <TableCell>
                             {p.status === 'available' && (
-                              <Button size="icon" variant="ghost" onClick={() => deletePlayer(p.id)} className="h-8 w-8 text-destructive hover:text-destructive">
+                              <Button
+                                size="icon" variant="ghost"
+                                onClick={() => deletePlayer(p.id)}
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
