@@ -217,7 +217,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      end_auction: { Args: { p_auction_id: string }; Returns: undefined }
       mark_unsold: { Args: { p_auction_id: string }; Returns: undefined }
+      move_player_to_unsold: { Args: { p_player_id: string }; Returns: Json }
       pause_auction_timer: {
         Args: { p_auction_id: string }
         Returns: undefined
@@ -232,6 +234,10 @@ export type Database = {
         Returns: Json
       }
       process_sale: { Args: { p_auction_id: string }; Returns: Json }
+      reassign_player: {
+        Args: { p_player_id: string; p_to_team_id: string }
+        Returns: Json
+      }
       set_active_player: {
         Args: { p_auction_id: string; p_player_id: string }
         Returns: undefined
