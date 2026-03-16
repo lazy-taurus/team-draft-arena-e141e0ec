@@ -3,19 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { generateJoinCode } from '@/lib/captain-session';
+import { AdminNavbar } from '@/components/AdminNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Settings, Monitor, Download, LogOut } from 'lucide-react';
+import { Plus, Settings, Monitor } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
 type Auction = Database['public']['Tables']['auctions']['Row'];
 
 export default function DashboardPage() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -67,22 +68,16 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">A</span>
-          </div>
-          <h1 className="text-xl font-bold">Auction Platform</h1>
-        </div>
-        <div className="flex items-center gap-3">
+      <AdminNavbar />
+      <main className="container py-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold">Your Auctions</h2>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="mr-2 h-4 w-4" /> Create New Auction</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Auction</DialogTitle>
-              </DialogHeader>
+              <DialogHeader><DialogTitle>Create Auction</DialogTitle></DialogHeader>
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
                   <Label>Event Name</Label>
@@ -98,14 +93,7 @@ export default function DashboardPage() {
               </div>
             </DialogContent>
           </Dialog>
-          <Button variant="ghost" size="icon" onClick={signOut}>
-            <LogOut className="h-4 w-4" />
-          </Button>
         </div>
-      </header>
-
-      <main className="container py-8">
-        <h2 className="text-lg font-semibold mb-4">Your Auctions</h2>
         {auctions.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
             <p>No auctions yet. Create one to get started.</p>
@@ -119,10 +107,10 @@ export default function DashboardPage() {
                   <p className="text-sm text-muted-foreground">
                     Code: <span className="font-mono font-bold text-foreground">{a.join_code}</span>
                     {' · '}
-                    <span className={a.status === 'live' ? 'text-success' : ''}>{a.status}</span>
+                    <span className={a.status === 'live' ? 'text-success' : a.status === 'completed' ? 'text-muted-foreground' : ''}>{a.status}</span>
                   </p>
                 </CardHeader>
-                <CardContent className="flex gap-2">
+                <CardContent className="flex gap-2 flex-wrap">
                   <Button size="sm" variant="outline" onClick={() => navigate(`/auction/${a.id}/setup`)}>
                     <Settings className="mr-1 h-3 w-3" /> Setup
                   </Button>
@@ -131,6 +119,9 @@ export default function DashboardPage() {
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => navigate(`/auction/${a.id}/live`)}>
                     <Monitor className="mr-1 h-3 w-3" /> Live
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => navigate(`/auction/${a.id}/rosters`)}>
+                    Rosters
                   </Button>
                 </CardContent>
               </Card>

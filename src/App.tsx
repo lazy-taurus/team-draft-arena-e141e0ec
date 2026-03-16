@@ -12,6 +12,7 @@ import SetupPage from "./pages/Setup";
 import LiveProjector from "./pages/LiveProjector";
 import CaptainBid from "./pages/CaptainBid";
 import AdminControl from "./pages/AdminControl";
+import RostersPage from "./pages/Rosters";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/auction/:id/live" element={<LiveProjector />} />
           <Route path="/auction/:id/bid" element={<CaptainBid />} />
           <Route path="/auction/:id/admin" element={<AdminControl />} />
+          <Route path="/auction/:id/rosters" element={<RostersPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

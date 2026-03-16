@@ -23,11 +23,10 @@ export default function LoginPage() {
     try {
       if (isSignUp) {
         await signUp(email, password);
-        toast({ title: 'Account created', description: 'Check your email to confirm.' });
       } else {
         await signIn(email, password);
-        navigate('/dashboard');
       }
+      navigate('/dashboard');
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {

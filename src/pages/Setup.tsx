@@ -2,13 +2,14 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
+import { AdminNavbar } from '@/components/AdminNavbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Upload, Plus, ArrowLeft, Rocket } from 'lucide-react';
+import { Upload, Plus, Rocket, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Papa from 'papaparse';
 import type { Database } from '@/integrations/supabase/types';
@@ -26,8 +27,6 @@ export default function SetupPage() {
   const [auction, setAuction] = useState<Auction | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-
-  // Manual add player
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerGender, setNewPlayerGender] = useState<'Male' | 'Female'>('Male');
   const [newPlayerTier, setNewPlayerTier] = useState('');
@@ -58,25 +57,42 @@ export default function SetupPage() {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: (h: string) => h.trim(),
       complete: async (results) => {
-        const rows = results.data as any[];
-        const inserts = rows.map(row => ({
-          auction_id: auctionId,
-          name: row.Name || row.name || '',
-          gender: (row.Gender || row.gender || row.Category || row.category || 'Male') as 'Male' | 'Female',
-          skill_tier: row['Skill Tier'] || row.skill_tier || row.Tier || '',
-          base_price: parseInt(row['Base Price'] || row.base_price || row.Price || '200') || 200,
-        })).filter(p => p.name);
+        const rows = results.data as Record<string, string>[];
+        const inserts = rows.map(row => {
+          const name = row['Name'] || row['name'] || row['Player Name'] || row['player_name'] || '';
+          const gender = row['Gender'] || row['gender'] || row['Category'] || row['category'] || 'Male';
+          const tier = row['Skill Tier'] || row['skill_tier'] || row['Tier'] || row['tier'] || '';
+          const price = parseInt(row['Base Price'] || row['base_price'] || row['Price'] || row['price'] || '200') || 200;
+          return {
+            auction_id: auctionId,
+            name: name.trim(),
+            gender: (gender.trim() === 'Female' ? 'Female' : 'Male') as 'Male' | 'Female',
+            skill_tier: tier.trim() || null,
+            base_price: price,
+          };
+        }).filter(p => p.name);
+
+        if (inserts.length === 0) {
+          toast({ title: 'No valid rows', description: 'Check your CSV columns.', variant: 'destructive' });
+          return;
+        }
 
         const { error } = await supabase.from('players').insert(inserts);
         if (error) {
           toast({ title: 'Upload Error', description: error.message, variant: 'destructive' });
         } else {
-          toast({ title: 'Success', description: `${inserts.length} players uploaded.` });
+          toast({ title: 'Success', description: `${inserts.length} players added to pool.` });
           fetchData();
         }
       },
+      error: (err) => {
+        toast({ title: 'Parse Error', description: err.message, variant: 'destructive' });
+      },
     });
+    // Reset input
+    e.target.value = '';
   };
 
   const addPlayer = async () => {
@@ -85,7 +101,7 @@ export default function SetupPage() {
       auction_id: auctionId,
       name: newPlayerName.trim(),
       gender: newPlayerGender,
-      skill_tier: newPlayerTier,
+      skill_tier: newPlayerTier || null,
       base_price: newPlayerPrice,
     });
     if (error) {
@@ -94,6 +110,15 @@ export default function SetupPage() {
       setNewPlayerName('');
       setNewPlayerTier('');
       setNewPlayerPrice(200);
+      fetchData();
+    }
+  };
+
+  const deletePlayer = async (id: string) => {
+    const { error } = await supabase.from('players').delete().eq('id', id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
       fetchData();
     }
   };
@@ -108,15 +133,11 @@ export default function SetupPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AdminNavbar />
       <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-lg font-bold">{auction.title}</h1>
-            <p className="text-sm text-muted-foreground">Code: <span className="font-mono font-bold">{auction.join_code}</span></p>
-          </div>
+        <div>
+          <h1 className="text-lg font-bold">{auction.title}</h1>
+          <p className="text-sm text-muted-foreground">Code: <span className="font-mono font-bold">{auction.join_code}</span></p>
         </div>
         <Button onClick={goLive} className="bg-success hover:bg-success/90 text-success-foreground">
           <Rocket className="mr-2 h-4 w-4" /> Initialize Live Auction
@@ -149,19 +170,17 @@ export default function SetupPage() {
           </TabsContent>
 
           <TabsContent value="players" className="mt-4 space-y-6">
-            {/* Upload */}
             <Card>
               <CardContent className="pt-6">
                 <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-8 cursor-pointer hover:border-primary transition-colors">
                   <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">Drop CSV/Excel file or click to upload</span>
+                  <span className="text-sm text-muted-foreground">Drop CSV file or click to upload</span>
                   <span className="text-xs text-muted-foreground mt-1">Columns: Name, Gender, Skill Tier, Base Price</span>
-                  <input type="file" accept=".csv,.xlsx,.xls" onChange={handleCSVUpload} className="hidden" />
+                  <input type="file" accept=".csv" onChange={handleCSVUpload} className="hidden" />
                 </label>
               </CardContent>
             </Card>
 
-            {/* Manual add */}
             <Card>
               <CardHeader><CardTitle className="text-base">Add Player Manually</CardTitle></CardHeader>
               <CardContent>
@@ -192,7 +211,6 @@ export default function SetupPage() {
               </CardContent>
             </Card>
 
-            {/* Player table */}
             {players.length > 0 && (
               <Card>
                 <CardContent className="pt-4">
@@ -204,6 +222,7 @@ export default function SetupPage() {
                         <TableHead>Tier</TableHead>
                         <TableHead>Base Price</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -214,6 +233,13 @@ export default function SetupPage() {
                           <TableCell>{p.skill_tier || '—'}</TableCell>
                           <TableCell className="font-mono">₹{p.base_price}</TableCell>
                           <TableCell>{p.status}</TableCell>
+                          <TableCell>
+                            {p.status === 'available' && (
+                              <Button size="icon" variant="ghost" onClick={() => deletePlayer(p.id)} className="h-8 w-8 text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

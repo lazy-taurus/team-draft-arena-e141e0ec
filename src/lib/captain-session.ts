@@ -1,5 +1,5 @@
-// Captain session persistence
-const CAPTAIN_SESSION_KEY = 'auction_captain_session';
+// Captain session persistence — supports multiple auctions
+const CAPTAIN_SESSIONS_KEY = 'auction_captain_sessions';
 
 export interface CaptainSession {
   teamId: string;
@@ -8,25 +8,34 @@ export interface CaptainSession {
   captainName: string;
 }
 
-export function saveCaptainSession(session: CaptainSession) {
-  localStorage.setItem(CAPTAIN_SESSION_KEY, JSON.stringify(session));
-}
-
-export function getCaptainSession(): CaptainSession | null {
-  const raw = localStorage.getItem(CAPTAIN_SESSION_KEY);
-  if (!raw) return null;
+export function getAllCaptainSessions(): CaptainSession[] {
+  const raw = localStorage.getItem(CAPTAIN_SESSIONS_KEY);
+  if (!raw) return [];
   try {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [parsed]; // migrate old format
   } catch {
-    return null;
+    return [];
   }
 }
 
-export function clearCaptainSession() {
-  localStorage.removeItem(CAPTAIN_SESSION_KEY);
+export function getCaptainSession(auctionId?: string): CaptainSession | null {
+  const sessions = getAllCaptainSessions();
+  if (auctionId) return sessions.find(s => s.auctionId === auctionId) || null;
+  return sessions[0] || null;
 }
 
-// Generate a 5-char join code
+export function saveCaptainSession(session: CaptainSession) {
+  const sessions = getAllCaptainSessions().filter(s => s.auctionId !== session.auctionId);
+  sessions.push(session);
+  localStorage.setItem(CAPTAIN_SESSIONS_KEY, JSON.stringify(sessions));
+}
+
+export function clearCaptainSession(auctionId: string) {
+  const sessions = getAllCaptainSessions().filter(s => s.auctionId !== auctionId);
+  localStorage.setItem(CAPTAIN_SESSIONS_KEY, JSON.stringify(sessions));
+}
+
 export function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
