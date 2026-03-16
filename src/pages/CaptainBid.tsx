@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuctionRealtime } from '@/hooks/use-auction-realtime';
 import { useCountdown } from '@/hooks/use-countdown';
@@ -9,8 +9,8 @@ import { motion } from 'framer-motion';
 
 export default function CaptainBid() {
   const { id: auctionId } = useParams<{ id: string }>();
-  const session = getCaptainSession();
-  const { auction, teams, currentPlayer } = useAuctionRealtime(auctionId);
+  const session = getCaptainSession(auctionId);
+  const { auction, teams, currentPlayer, allPlayers } = useAuctionRealtime(auctionId);
   const secondsLeft = useCountdown(auction?.timer_ends_at);
   const { toast } = useToast();
   const [customBid, setCustomBid] = useState('');
@@ -20,13 +20,23 @@ export default function CaptainBid() {
   const isHighestBidder = currentPlayer?.current_highest_bidder_id === session?.teamId;
 
   const currentBid = currentPlayer?.current_highest_bid || currentPlayer?.base_price || 0;
-  const remainingSlots = myTeam ? 10 - (myTeam.boys_count + myTeam.girls_count) : 0;
-  const maxBid = myTeam ? myTeam.purse_balance - ((remainingSlots - 1) * 200) : 0;
 
-  // Category cap check
+  // Dynamic caps
+  const teamCount = teams.length || 1;
+  const { maleCap, femaleCap, totalCap } = useMemo(() => {
+    const mp = allPlayers.filter(p => p.gender === 'Male').length;
+    const fp = allPlayers.filter(p => p.gender === 'Female').length;
+    const mc = Math.ceil(mp / teamCount);
+    const fc = Math.ceil(fp / teamCount);
+    return { maleCap: mc, femaleCap: fc, totalCap: mc + fc };
+  }, [allPlayers, teamCount]);
+
+  const remainingSlots = myTeam ? totalCap - (myTeam.boys_count + myTeam.girls_count) : 0;
+  const maxBid = myTeam ? myTeam.purse_balance - (Math.max(remainingSlots - 1, 0) * 200) : 0;
+
   const isCategoryFull = currentPlayer && myTeam && (
-    (currentPlayer.gender === 'Female' && myTeam.girls_count >= 3) ||
-    (currentPlayer.gender === 'Male' && myTeam.boys_count >= 7)
+    (currentPlayer.gender === 'Female' && myTeam.girls_count >= femaleCap) ||
+    (currentPlayer.gender === 'Male' && myTeam.boys_count >= maleCap)
   );
 
   const placeBid = async (amount: number) => {
@@ -62,7 +72,6 @@ export default function CaptainBid() {
 
   return (
     <div className="dark min-h-screen bg-[hsl(222,47%,11%)] text-[hsl(210,40%,98%)] flex flex-col">
-      {/* Header */}
       <div className="px-4 py-3 border-b border-[hsl(215,25%,22%)] flex items-center justify-between">
         <div>
           <p className="font-bold">{session.teamName}</p>
@@ -71,14 +80,18 @@ export default function CaptainBid() {
           </p>
         </div>
         <div className="text-right text-xs text-[hsl(215,20%,65%)]">
-          <p>Boys: {myTeam?.boys_count || 0}/7</p>
-          <p>Girls: {myTeam?.girls_count || 0}/3</p>
+          <p>Boys: {myTeam?.boys_count || 0}/{maleCap}</p>
+          <p>Girls: {myTeam?.girls_count || 0}/{femaleCap}</p>
         </div>
       </div>
 
-      {/* Player on block */}
       <div className="flex-1 flex flex-col items-center justify-center p-6">
-        {currentPlayer ? (
+        {auction?.status === 'completed' ? (
+          <div className="text-center">
+            <p className="text-3xl font-bold text-[hsl(142,71%,45%)]">🏆 Auction Complete!</p>
+            <p className="text-[hsl(215,20%,65%)] mt-2">Thanks for participating, {session.teamName}.</p>
+          </div>
+        ) : currentPlayer ? (
           <>
             <div className="text-center mb-6">
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-[hsl(217,91%,60%)]/20 text-[hsl(217,91%,60%)] mb-2">
@@ -88,20 +101,13 @@ export default function CaptainBid() {
               <p className="text-sm text-[hsl(215,20%,65%)] mt-1">Base: ₹{currentPlayer.base_price}</p>
             </div>
 
-            {/* Timer */}
             {secondsLeft !== null && (
-              <div className={`text-5xl font-mono tabular-nums mb-4 ${secondsLeft <= 5 ? 'text-[hsl(0,84%,60%)]' : ''}`}>
+              <div className={`text-5xl font-mono tabular-nums mb-4 ${secondsLeft <= 5 ? 'text-[hsl(0,84%,60%)] animate-pulse' : ''}`}>
                 {secondsLeft}s
               </div>
             )}
 
-            {/* Current bid */}
-            <motion.div
-              key={currentBid}
-              initial={{ scale: 1.1 }}
-              animate={{ scale: 1 }}
-              className="text-center mb-6"
-            >
+            <motion.div key={currentBid} initial={{ scale: 1.1 }} animate={{ scale: 1 }} className="text-center mb-6">
               <p className="text-sm text-[hsl(215,20%,65%)] uppercase tracking-wider">Current Bid</p>
               <p className="text-5xl font-black font-mono tabular-nums">₹{currentBid.toLocaleString()}</p>
             </motion.div>
@@ -112,16 +118,14 @@ export default function CaptainBid() {
               </div>
             )}
 
-            {/* Bidding UI */}
             {isCategoryFull ? (
               <div className="w-full py-4 rounded-xl bg-[hsl(0,84%,60%)]/15 border border-[hsl(0,84%,60%)]/30 text-center">
                 <p className="text-[hsl(0,84%,60%)] font-bold">
-                  Category Full: {currentPlayer.gender === 'Female' ? '3/3 Girls' : '7/7 Boys'} Drafted
+                  Category Full: {currentPlayer.gender === 'Female' ? `${myTeam?.girls_count}/${femaleCap} Girls` : `${myTeam?.boys_count}/${maleCap} Boys`} Drafted
                 </p>
               </div>
             ) : (
               <div className="w-full space-y-3">
-                {/* Quick bid buttons */}
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => placeBid(currentBid + 100)}
@@ -138,8 +142,6 @@ export default function CaptainBid() {
                     +₹250 → ₹{(currentBid + 250).toLocaleString()}
                   </button>
                 </div>
-
-                {/* Custom bid */}
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -149,23 +151,15 @@ export default function CaptainBid() {
                     className="flex-1 h-14 rounded-xl bg-[hsl(215,25%,15%)] border border-[hsl(215,25%,22%)] px-4 text-lg font-mono tabular-nums text-[hsl(210,40%,98%)] placeholder:text-[hsl(215,20%,65%)]/50 focus:outline-none focus:border-[hsl(217,91%,60%)]"
                   />
                 </div>
-
-                {/* BIG BID BUTTON */}
                 <button
-                  onClick={() => {
-                    const amt = customBid ? parseInt(customBid) : currentBid + 100;
-                    placeBid(amt);
-                  }}
+                  onClick={() => placeBid(customBid ? parseInt(customBid) : currentBid + 100)}
                   disabled={bidding || isHighestBidder || (customBid ? parseInt(customBid) > maxBid || parseInt(customBid) <= currentBid : currentBid + 100 > maxBid)}
                   className="w-full py-6 rounded-2xl bg-[hsl(217,91%,60%)] text-[hsl(0,0%,100%)] text-2xl font-bold transition-all active:scale-[0.98] active:translate-y-[2px] disabled:opacity-40 disabled:cursor-not-allowed bid-button-shadow active:bid-button-shadow-pressed"
                 >
                   {bidding ? 'BIDDING...' : `BID ₹${(customBid ? parseInt(customBid) || 0 : currentBid + 100).toLocaleString()}`}
                 </button>
-
                 {maxBid < currentBid + 100 && (
-                  <p className="text-xs text-center text-[hsl(0,84%,60%)]">
-                    Insufficient funds. Max bid: ₹{maxBid.toLocaleString()}
-                  </p>
+                  <p className="text-xs text-center text-[hsl(0,84%,60%)]">Insufficient funds. Max bid: ₹{maxBid.toLocaleString()}</p>
                 )}
               </div>
             )}
@@ -173,8 +167,7 @@ export default function CaptainBid() {
         ) : (
           <div className="text-center">
             <p className="text-xl text-[hsl(215,20%,65%)]">
-              Welcome, {session.teamName}.<br />
-              Waiting for the Organizer to begin the draft...
+              Welcome, {session.teamName}.<br />Waiting for the Organizer to begin the draft...
             </p>
           </div>
         )}
