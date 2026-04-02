@@ -292,12 +292,13 @@ export default function SetupPage() {
                       min={1}
                     />
                   </div>
-                  <div className="space-y-1 flex-1 min-w-[200px]">
-                    <Label className="text-xs">Photo URL (optional)</Label>
+                  <div className="space-y-1 w-40">
+                    <Label className="text-xs">Photo (optional)</Label>
                     <Input
-                      value={newPlayerPhotoUrl}
-                      onChange={e => setNewPlayerPhotoUrl(e.target.value)}
-                      placeholder="https://… or leave blank"
+                      type="file"
+                      accept="image/*"
+                      onChange={e => setNewPlayerPhoto(e.target.files?.[0] || null)}
+                      className="text-xs"
                     />
                   </div>
                   <Button onClick={addPlayer} disabled={!newPlayerName.trim() || uploading}>
