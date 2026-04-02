@@ -19,7 +19,7 @@ type Player  = Database['public']['Tables']['players']['Row'];
 type Team    = Database['public']['Tables']['teams']['Row'];
 type Auction = Database['public']['Tables']['auctions']['Row'];
 
-const FIXED_BASE_PRICE = 100;
+const DEFAULT_BASE_PRICE = 100;
 const FIXED_SKILL_TIER = 'player';
 
 export default function SetupPage() {
@@ -33,6 +33,9 @@ export default function SetupPage() {
   const [teams, setTeams]               = useState<Team[]>([]);
   const [newPlayerName, setNewPlayerName]   = useState('');
   const [newPlayerGender, setNewPlayerGender] = useState<'Male' | 'Female'>('Male');
+  const [newPlayerBasePrice, setNewPlayerBasePrice] = useState(DEFAULT_BASE_PRICE);
+  const [newPlayerPhotoUrl, setNewPlayerPhotoUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!auctionId) return;
@@ -53,7 +56,7 @@ export default function SetupPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // ── Shared insert helper ──────────────────────────────────────────────────
-  const insertPlayers = async (rows: { name: string; gender: 'Male' | 'Female' }[]) => {
+  const insertPlayers = async (rows: { name: string; gender: 'Male' | 'Female'; base_price?: number }[]) => {
     const inserts = rows
       .filter(r => r.name.trim())
       .map(r => ({
@@ -61,7 +64,7 @@ export default function SetupPage() {
         name:        r.name.trim(),
         gender:      r.gender,
         skill_tier:  FIXED_SKILL_TIER,
-        base_price:  FIXED_BASE_PRICE,
+        base_price:  r.base_price || DEFAULT_BASE_PRICE,
       }));
 
     if (inserts.length === 0) {
@@ -87,9 +90,12 @@ export default function SetupPage() {
       const get = (...keys: string[]) => keys.map(k => lower[k]).find(Boolean) ?? '';
       const name   = get('name', 'player name', 'player_name', 'full name', 'fullname');
       const gender = get('gender', 'category', 'sex') || 'Male';
+      const priceStr = get('base_price', 'baseprice', 'base price', 'price');
+      const base_price = priceStr ? parseInt(priceStr) || DEFAULT_BASE_PRICE : DEFAULT_BASE_PRICE;
       return {
         name,
         gender: (gender.trim() === 'Female' ? 'Female' : 'Male') as 'Male' | 'Female',
+        base_price,
       };
     });
 
@@ -135,20 +141,40 @@ export default function SetupPage() {
   };
 
   // ── Add single player ─────────────────────────────────────────────────────
+  const uploadPhoto = async (file: File): Promise<string | null> => {
+    setUploading(true);
+    const ext = file.name.split('.').pop();
+    const path = `${auctionId}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('player-photos').upload(path, file);
+    setUploading(false);
+    if (error) {
+      toast({ title: 'Upload Error', description: error.message, variant: 'destructive' });
+      return null;
+    }
+    const { data: { publicUrl } } = supabase.storage.from('player-photos').getPublicUrl(path);
+    return publicUrl;
+  };
+
   const addPlayer = async () => {
     if (!auctionId || !newPlayerName.trim()) return;
+    let photoUrl: string | null = null;
+    if (newPlayerPhotoUrl.trim()) photoUrl = newPlayerPhotoUrl.trim();
+
     const { error } = await supabase.from('players').insert({
       auction_id: auctionId,
       name:       newPlayerName.trim(),
       gender:     newPlayerGender,
       skill_tier: FIXED_SKILL_TIER,
-      base_price: FIXED_BASE_PRICE,
-    });
+      base_price: newPlayerBasePrice,
+      photo_url:  photoUrl,
+    } as any);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       setNewPlayerName('');
       setNewPlayerGender('Male');
+      setNewPlayerBasePrice(DEFAULT_BASE_PRICE);
+      setNewPlayerPhotoUrl('');
       fetchData();
     }
   };
@@ -232,8 +258,8 @@ export default function SetupPage() {
             <Card>
               <CardHeader><CardTitle className="text-base">Add Player Manually</CardTitle></CardHeader>
               <CardContent>
-                <div className="flex gap-3 items-end">
-                  <div className="space-y-1 flex-1">
+                <div className="flex flex-wrap gap-3 items-end">
+                  <div className="space-y-1 flex-1 min-w-[140px]">
                     <Label className="text-xs">Name</Label>
                     <Input
                       value={newPlayerName}
@@ -242,7 +268,7 @@ export default function SetupPage() {
                       placeholder="Player name"
                     />
                   </div>
-                  <div className="space-y-1 w-36">
+                  <div className="space-y-1 w-28">
                     <Label className="text-xs">Gender</Label>
                     <select
                       value={newPlayerGender}
@@ -253,7 +279,24 @@ export default function SetupPage() {
                       <option value="Female">Female</option>
                     </select>
                   </div>
-                  <Button onClick={addPlayer} disabled={!newPlayerName.trim()}>
+                  <div className="space-y-1 w-28">
+                    <Label className="text-xs">Base Price (₹)</Label>
+                    <Input
+                      type="number"
+                      value={newPlayerBasePrice}
+                      onChange={e => setNewPlayerBasePrice(parseInt(e.target.value) || DEFAULT_BASE_PRICE)}
+                      min={1}
+                    />
+                  </div>
+                  <div className="space-y-1 flex-1 min-w-[200px]">
+                    <Label className="text-xs">Photo URL (optional)</Label>
+                    <Input
+                      value={newPlayerPhotoUrl}
+                      onChange={e => setNewPlayerPhotoUrl(e.target.value)}
+                      placeholder="https://… or leave blank"
+                    />
+                  </div>
+                  <Button onClick={addPlayer} disabled={!newPlayerName.trim() || uploading}>
                     <Plus className="mr-1 h-4 w-4" /> Add
                   </Button>
                 </div>

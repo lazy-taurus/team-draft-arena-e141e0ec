@@ -2,15 +2,18 @@ import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuctionRealtime } from '@/hooks/use-auction-realtime';
 import { useCountdown } from '@/hooks/use-countdown';
+import { usePreviewCountdown } from '@/hooks/use-preview-countdown';
 import { getCaptainSession } from '@/lib/captain-session';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
 
 export default function CaptainBid() {
   const { id: auctionId } = useParams<{ id: string }>();
   const session = getCaptainSession(auctionId);
   const { auction, teams, currentPlayer, allPlayers, refetch } = useAuctionRealtime(auctionId);
+  const previewLeft = usePreviewCountdown((auction as any)?.preview_ends_at);
   const secondsLeft = useCountdown(auction?.timer_ends_at);
   const { toast } = useToast();
   const [customBid, setCustomBid] = useState('');
@@ -18,6 +21,10 @@ export default function CaptainBid() {
 
   const myTeam = teams.find(t => t.id === session?.teamId);
   const isHighestBidder = currentPlayer?.current_highest_bidder_id === session?.teamId;
+  const isPreviewPhase = previewLeft !== null && previewLeft > 0;
+
+  // Bidding timer: only show after preview ends
+  const biddingSecondsLeft = isPreviewPhase ? null : secondsLeft;
 
   const currentBid = currentPlayer?.current_highest_bid || currentPlayer?.base_price || 0;
 
@@ -40,7 +47,7 @@ export default function CaptainBid() {
   );
 
   const placeBid = async (amount: number) => {
-    if (!auctionId || !session?.teamId || !currentPlayer || bidding) return;
+    if (!auctionId || !session?.teamId || !currentPlayer || bidding || isPreviewPhase) return;
     setBidding(true);
     try {
       const { data, error } = await supabase.rpc('place_bid', {
@@ -54,7 +61,6 @@ export default function CaptainBid() {
       if (result && !result.success) {
         toast({ title: 'Bid Rejected', description: result.error, variant: 'destructive' });
       } else {
-        // Immediately sync timer reset from database
         await refetch();
       }
     } catch (err: any) {
@@ -96,7 +102,14 @@ export default function CaptainBid() {
           </div>
         ) : currentPlayer ? (
           <>
-            <div className="text-center mb-6">
+            <div className="text-center mb-4">
+              <PlayerAvatar
+                photoUrl={(currentPlayer as any).photo_url}
+                gender={currentPlayer.gender}
+                name={currentPlayer.name}
+                size="lg"
+                className="mx-auto mb-3"
+              />
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-[hsl(217,91%,60%)]/20 text-[hsl(217,91%,60%)] mb-2">
                 {currentPlayer.gender} · {currentPlayer.skill_tier || 'Untiered'}
               </span>
@@ -104,9 +117,22 @@ export default function CaptainBid() {
               <p className="text-sm text-[hsl(215,20%,65%)] mt-1">Base: ₹{currentPlayer.base_price}</p>
             </div>
 
-            {secondsLeft !== null && (
-              <div className={`text-5xl font-mono tabular-nums mb-4 ${secondsLeft <= 5 ? 'text-[hsl(0,84%,60%)] animate-pulse' : ''}`}>
-                {secondsLeft}s
+            {/* Preview phase indicator */}
+            {isPreviewPhase && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-full mb-4 py-4 rounded-xl bg-[hsl(280,80%,60%)]/15 border border-[hsl(280,80%,60%)]/30 text-center"
+              >
+                <p className="text-[hsl(280,80%,70%)] font-bold text-lg">PREVIEW PHASE</p>
+                <p className="text-4xl font-mono tabular-nums text-[hsl(280,80%,70%)] mt-1">{previewLeft}s</p>
+                <p className="text-xs text-[hsl(280,80%,60%)] mt-1">Bidding starts soon…</p>
+              </motion.div>
+            )}
+
+            {!isPreviewPhase && biddingSecondsLeft !== null && (
+              <div className={`text-5xl font-mono tabular-nums mb-4 ${biddingSecondsLeft <= 5 ? 'text-[hsl(0,84%,60%)] animate-pulse' : ''}`}>
+                {biddingSecondsLeft}s
               </div>
             )}
 
@@ -121,7 +147,11 @@ export default function CaptainBid() {
               </div>
             )}
 
-            {isCategoryFull ? (
+            {isPreviewPhase ? (
+              <div className="w-full py-6 rounded-2xl bg-[hsl(215,25%,20%)] text-center opacity-50">
+                <p className="text-xl font-bold text-[hsl(215,20%,65%)]">⏳ Bidding locked during preview</p>
+              </div>
+            ) : isCategoryFull ? (
               <div className="w-full py-4 rounded-xl bg-[hsl(0,84%,60%)]/15 border border-[hsl(0,84%,60%)]/30 text-center">
                 <p className="text-[hsl(0,84%,60%)] font-bold">
                   Category Full: {currentPlayer.gender === 'Female' ? `${myTeam?.girls_count}/${femaleCap} Girls` : `${myTeam?.boys_count}/${maleCap} Boys`} Drafted

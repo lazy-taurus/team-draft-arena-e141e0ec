@@ -2,9 +2,11 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuctionRealtime } from '@/hooks/use-auction-realtime';
 import { useCountdown } from '@/hooks/use-countdown';
+import { usePreviewCountdown } from '@/hooks/use-preview-countdown';
 import { useSound } from '@/hooks/use-sound';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
 
 // ─── Web-Audio synth ─────────────────────────────────────────────────────────
 function useSynth() {
@@ -162,7 +164,10 @@ function TeamCard({ team, soldPlayers, maleCap, femaleCap, isHighest, isBidFlash
 export default function LiveProjector() {
   const { id: auctionId } = useParams<{ id: string }>();
   const { auction, teams, currentPlayer, recentBids, allPlayers } = useAuctionRealtime(auctionId);
+  const previewLeft = usePreviewCountdown((auction as any)?.preview_ends_at);
   const secondsLeft = useCountdown(auction?.timer_ends_at);
+  const isPreviewPhase = previewLeft !== null && previewLeft > 0;
+  const biddingSecondsLeft = isPreviewPhase ? null : secondsLeft;
   const { playSwoosh, playTick, playGavel } = useSound();
   const { playBidPlaced, playNewHighestBidder, playFinalThree, playFanfare, playNewPlayer, playUnsold } = useSynth();
 
@@ -254,10 +259,10 @@ export default function LiveProjector() {
   }, [currentPlayer?.current_highest_bid, currentPlayer?.current_highest_bidder_id]);
 
   useEffect(() => {
-    if (secondsLeft !== null && secondsLeft <= 5 && secondsLeft > 0 && tickedRef.current !== secondsLeft) {
-      tickedRef.current = secondsLeft;
+    if (biddingSecondsLeft !== null && biddingSecondsLeft <= 5 && biddingSecondsLeft > 0 && tickedRef.current !== biddingSecondsLeft) {
+      tickedRef.current = biddingSecondsLeft;
       playTick();
-      if (secondsLeft <= 3) {
+      if (biddingSecondsLeft <= 3) {
         playFinalThree();
         setTimerShake(true);
         setTimeout(() => setTimerShake(false), 400);
@@ -265,10 +270,10 @@ export default function LiveProjector() {
         spawnParticles(6, ['hsl(0,84%,60%)','hsl(30,100%,60%)']);
       }
     }
-    if (secondsLeft === null || secondsLeft > 5) tickedRef.current = null;
-  }, [secondsLeft]);
+    if (biddingSecondsLeft === null || biddingSecondsLeft > 5) tickedRef.current = null;
+  }, [biddingSecondsLeft]);
 
-  const urgency = secondsLeft !== null && secondsLeft <= 5;
+  const urgency = biddingSecondsLeft !== null && biddingSecondsLeft <= 5;
 
   return (
     <div className="dark min-h-screen bg-[hsl(222,47%,11%)] text-[hsl(210,40%,98%)] flex overflow-hidden relative">
@@ -362,6 +367,15 @@ export default function LiveProjector() {
               exit={{opacity:0,y:-40,scale:0.95}} transition={{type:'spring',stiffness:300,damping:25}}
               className="text-center w-full"
             >
+              {/* Avatar */}
+              <PlayerAvatar
+                photoUrl={(currentPlayer as any).photo_url}
+                gender={currentPlayer.gender}
+                name={currentPlayer.name}
+                size="xl"
+                className="mx-auto mb-4"
+              />
+
               {/* Badge */}
               <motion.div initial={{opacity:0,x:-30}} animate={{opacity:1,x:0}} transition={{delay:0.2}} className="mb-3">
                 <motion.span
@@ -411,25 +425,46 @@ export default function LiveProjector() {
                 )}
               </div>
 
-              {/* Timer */}
-              {secondsLeft !== null && (
-                <motion.div key={secondsLeft}
+              {/* Preview Phase */}
+              {isPreviewPhase && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="inline-flex flex-col items-center justify-center px-10 py-5 rounded-2xl backdrop-blur-xl border bg-[hsl(280,80%,60%)]/10 border-[hsl(280,80%,60%)]/30"
+                >
+                  <p className="text-sm uppercase tracking-widest text-[hsl(280,80%,70%)] font-bold mb-1">Preview Phase</p>
+                  <motion.span
+                    key={previewLeft}
+                    initial={{ scale: 1.2 }}
+                    animate={{ scale: 1 }}
+                    className="font-mono tabular-nums text-[hsl(280,80%,70%)]"
+                    style={{ fontSize: 'clamp(2rem,5vw,4rem)' }}
+                  >
+                    {previewLeft}s
+                  </motion.span>
+                  <p className="text-xs text-[hsl(280,80%,60%)] mt-1">Bidding starts soon…</p>
+                </motion.div>
+              )}
+
+              {/* Bidding Timer */}
+              {!isPreviewPhase && biddingSecondsLeft !== null && (
+                <motion.div key={biddingSecondsLeft}
                   initial={{scale:1.15}}
                   animate={timerShake ? {scale:1,x:[0,-8,8,-6,6,0]} : {scale:1}}
                   transition={timerShake ? {duration:0.35} : {}}
                   className={`inline-flex items-center justify-center font-mono tabular-nums px-8 py-4 rounded-2xl backdrop-blur-xl border transition-all ${
-                    secondsLeft<=3
+                    biddingSecondsLeft<=3
                       ? 'bg-[hsl(0,84%,60%)]/15 border-[hsl(0,84%,60%)]/50 text-[hsl(0,84%,60%)]'
-                      : secondsLeft<=5
+                      : biddingSecondsLeft<=5
                       ? 'bg-[hsl(30,100%,60%)]/10 border-[hsl(30,100%,60%)]/30 text-[hsl(30,100%,60%)]'
                       : 'bg-[hsl(210,40%,98%)]/5 border-[hsl(210,40%,98%)]/10'
                   }`}
                   style={{
                     fontSize:'clamp(2.5rem,6vw,5rem)',
-                    ...(secondsLeft<=3 ? {boxShadow:'0 0 30px hsl(0,84%,60%,0.3),inset 0 0 20px hsl(0,84%,60%,0.1)'} : {})
+                    ...(biddingSecondsLeft<=3 ? {boxShadow:'0 0 30px hsl(0,84%,60%,0.3),inset 0 0 20px hsl(0,84%,60%,0.1)'} : {})
                   }}
                 >
-                  {secondsLeft}s
+                  {biddingSecondsLeft}s
                 </motion.div>
               )}
             </motion.div>

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { useAuctionRealtime } from '@/hooks/use-auction-realtime';
 import { useCountdown } from '@/hooks/use-countdown';
+import { usePreviewCountdown } from '@/hooks/use-preview-countdown';
 import { AdminNavbar } from '@/components/AdminNavbar';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,10 @@ export default function AdminControl() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { auction, teams, currentPlayer, recentBids, allPlayers, refetch } = useAuctionRealtime(auctionId);
+  const previewLeft = usePreviewCountdown((auction as any)?.preview_ends_at);
   const secondsLeft = useCountdown(auction?.timer_ends_at);
+  const isPreviewPhase = previewLeft !== null && previewLeft > 0;
+  const biddingSecondsLeft = isPreviewPhase ? null : secondsLeft;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'available' | 'unsold'>('available');
@@ -30,9 +34,9 @@ export default function AdminControl() {
     if (!authLoading && !user) navigate('/login');
   }, [user, authLoading, navigate]);
 
-  // Auto-sell when timer hits 0
+  // Auto-sell when bidding timer hits 0 (not during preview)
   useEffect(() => {
-    if (secondsLeft === 0 && currentPlayer && !autoSellFired.current) {
+    if (biddingSecondsLeft === 0 && currentPlayer && !autoSellFired.current && !isPreviewPhase) {
       autoSellFired.current = true;
       if (currentPlayer.current_highest_bidder_id) {
         handleForceSell();
@@ -40,10 +44,10 @@ export default function AdminControl() {
         handleMarkUnsold();
       }
     }
-    if (secondsLeft !== null && secondsLeft > 0) {
+    if (biddingSecondsLeft !== null && biddingSecondsLeft > 0) {
       autoSellFired.current = false;
     }
-  }, [secondsLeft, currentPlayer]);
+  }, [biddingSecondsLeft, currentPlayer, isPreviewPhase]);
 
   // Auto-end auction if all players processed
   useEffect(() => {
@@ -180,11 +184,18 @@ export default function AdminControl() {
                       <CardTitle className="text-2xl">{currentPlayer.name}</CardTitle>
                       <p className="text-muted-foreground">{currentPlayer.gender} · {currentPlayer.skill_tier || 'Untiered'} · Base: ₹{currentPlayer.base_price}</p>
                     </div>
-                    {secondsLeft !== null && (
-                      <div className={`text-4xl font-mono tabular-nums font-bold ${secondsLeft <= 5 ? 'text-destructive' : 'text-primary'}`}>
-                        {secondsLeft}s
+                    {isPreviewPhase ? (
+                      <div className="text-center">
+                        <p className="text-xs uppercase tracking-wider text-[hsl(280,80%,60%)] font-bold">Preview</p>
+                        <div className="text-4xl font-mono tabular-nums font-bold text-[hsl(280,80%,70%)]">
+                          {previewLeft}s
+                        </div>
                       </div>
-                    )}
+                    ) : biddingSecondsLeft !== null ? (
+                      <div className={`text-4xl font-mono tabular-nums font-bold ${biddingSecondsLeft <= 5 ? 'text-destructive' : 'text-primary'}`}>
+                        {biddingSecondsLeft}s
+                      </div>
+                    ) : null}
                   </div>
                 </CardHeader>
                 <CardContent>
