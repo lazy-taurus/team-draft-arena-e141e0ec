@@ -25,6 +25,7 @@ export type Database = {
           status: string
           timer_ends_at: string | null
           title: string
+          preview_ends_at: string | null 
         }
         Insert: {
           admin_id: string
@@ -36,6 +37,7 @@ export type Database = {
           status?: string
           timer_ends_at?: string | null
           title: string
+          preview_ends_at: string | null 
         }
         Update: {
           admin_id?: string
@@ -47,6 +49,7 @@ export type Database = {
           status?: string
           timer_ends_at?: string | null
           title?: string
+          preview_ends_at: string | null 
         }
         Relationships: [
           {
