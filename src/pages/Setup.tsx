@@ -90,9 +90,12 @@ export default function SetupPage() {
       const get = (...keys: string[]) => keys.map(k => lower[k]).find(Boolean) ?? '';
       const name   = get('name', 'player name', 'player_name', 'full name', 'fullname');
       const gender = get('gender', 'category', 'sex') || 'Male';
+      const priceStr = get('base_price', 'baseprice', 'base price', 'price');
+      const base_price = priceStr ? parseInt(priceStr) || DEFAULT_BASE_PRICE : DEFAULT_BASE_PRICE;
       return {
         name,
         gender: (gender.trim() === 'Female' ? 'Female' : 'Male') as 'Male' | 'Female',
+        base_price,
       };
     });
 
