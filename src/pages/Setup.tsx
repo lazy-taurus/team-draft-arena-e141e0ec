@@ -34,7 +34,7 @@ export default function SetupPage() {
   const [newPlayerName, setNewPlayerName]   = useState('');
   const [newPlayerGender, setNewPlayerGender] = useState<'Male' | 'Female'>('Male');
   const [newPlayerBasePrice, setNewPlayerBasePrice] = useState(DEFAULT_BASE_PRICE);
-  const [newPlayerPhotoUrl, setNewPlayerPhotoUrl] = useState('');
+  const [newPlayerPhoto, setNewPlayerPhoto] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const fetchData = useCallback(async () => {
