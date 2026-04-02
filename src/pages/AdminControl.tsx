@@ -184,11 +184,18 @@ export default function AdminControl() {
                       <CardTitle className="text-2xl">{currentPlayer.name}</CardTitle>
                       <p className="text-muted-foreground">{currentPlayer.gender} · {currentPlayer.skill_tier || 'Untiered'} · Base: ₹{currentPlayer.base_price}</p>
                     </div>
-                    {secondsLeft !== null && (
-                      <div className={`text-4xl font-mono tabular-nums font-bold ${secondsLeft <= 5 ? 'text-destructive' : 'text-primary'}`}>
-                        {secondsLeft}s
+                    {isPreviewPhase ? (
+                      <div className="text-center">
+                        <p className="text-xs uppercase tracking-wider text-[hsl(280,80%,60%)] font-bold">Preview</p>
+                        <div className="text-4xl font-mono tabular-nums font-bold text-[hsl(280,80%,70%)]">
+                          {previewLeft}s
+                        </div>
                       </div>
-                    )}
+                    ) : biddingSecondsLeft !== null ? (
+                      <div className={`text-4xl font-mono tabular-nums font-bold ${biddingSecondsLeft <= 5 ? 'text-destructive' : 'text-primary'}`}>
+                        {biddingSecondsLeft}s
+                      </div>
+                    ) : null}
                   </div>
                 </CardHeader>
                 <CardContent>
