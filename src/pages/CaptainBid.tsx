@@ -104,7 +104,7 @@ export default function CaptainBid() {
           <>
             <div className="text-center mb-4">
               <PlayerAvatar
-                photoUrl={(currentPlayer as any).photo_url}
+                photoUrl={currentPlayer.photo_url}
                 gender={currentPlayer.gender}
                 name={currentPlayer.name}
                 size="lg"
