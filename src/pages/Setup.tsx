@@ -56,7 +56,7 @@ export default function SetupPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // ── Shared insert helper ──────────────────────────────────────────────────
-  const insertPlayers = async (rows: { name: string; gender: 'Male' | 'Female' }[]) => {
+  const insertPlayers = async (rows: { name: string; gender: 'Male' | 'Female'; base_price?: number }[]) => {
     const inserts = rows
       .filter(r => r.name.trim())
       .map(r => ({
@@ -64,7 +64,7 @@ export default function SetupPage() {
         name:        r.name.trim(),
         gender:      r.gender,
         skill_tier:  FIXED_SKILL_TIER,
-        base_price:  FIXED_BASE_PRICE,
+        base_price:  r.base_price || DEFAULT_BASE_PRICE,
       }));
 
     if (inserts.length === 0) {
