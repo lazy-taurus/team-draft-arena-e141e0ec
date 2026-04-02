@@ -34,9 +34,9 @@ export default function AdminControl() {
     if (!authLoading && !user) navigate('/login');
   }, [user, authLoading, navigate]);
 
-  // Auto-sell when timer hits 0
+  // Auto-sell when bidding timer hits 0 (not during preview)
   useEffect(() => {
-    if (secondsLeft === 0 && currentPlayer && !autoSellFired.current) {
+    if (biddingSecondsLeft === 0 && currentPlayer && !autoSellFired.current && !isPreviewPhase) {
       autoSellFired.current = true;
       if (currentPlayer.current_highest_bidder_id) {
         handleForceSell();
@@ -44,10 +44,10 @@ export default function AdminControl() {
         handleMarkUnsold();
       }
     }
-    if (secondsLeft !== null && secondsLeft > 0) {
+    if (biddingSecondsLeft !== null && biddingSecondsLeft > 0) {
       autoSellFired.current = false;
     }
-  }, [secondsLeft, currentPlayer]);
+  }, [biddingSecondsLeft, currentPlayer, isPreviewPhase]);
 
   // Auto-end auction if all players processed
   useEffect(() => {
