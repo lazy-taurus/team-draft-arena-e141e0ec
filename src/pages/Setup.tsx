@@ -19,7 +19,7 @@ type Player  = Database['public']['Tables']['players']['Row'];
 type Team    = Database['public']['Tables']['teams']['Row'];
 type Auction = Database['public']['Tables']['auctions']['Row'];
 
-const FIXED_BASE_PRICE = 100;
+const DEFAULT_BASE_PRICE = 100;
 const FIXED_SKILL_TIER = 'player';
 
 export default function SetupPage() {
