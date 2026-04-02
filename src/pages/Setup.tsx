@@ -141,20 +141,40 @@ export default function SetupPage() {
   };
 
   // ── Add single player ─────────────────────────────────────────────────────
+  const uploadPhoto = async (file: File): Promise<string | null> => {
+    setUploading(true);
+    const ext = file.name.split('.').pop();
+    const path = `${auctionId}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('player-photos').upload(path, file);
+    setUploading(false);
+    if (error) {
+      toast({ title: 'Upload Error', description: error.message, variant: 'destructive' });
+      return null;
+    }
+    const { data: { publicUrl } } = supabase.storage.from('player-photos').getPublicUrl(path);
+    return publicUrl;
+  };
+
   const addPlayer = async () => {
     if (!auctionId || !newPlayerName.trim()) return;
+    let photoUrl: string | null = null;
+    if (newPlayerPhotoUrl.trim()) photoUrl = newPlayerPhotoUrl.trim();
+
     const { error } = await supabase.from('players').insert({
       auction_id: auctionId,
       name:       newPlayerName.trim(),
       gender:     newPlayerGender,
       skill_tier: FIXED_SKILL_TIER,
-      base_price: FIXED_BASE_PRICE,
-    });
+      base_price: newPlayerBasePrice,
+      photo_url:  photoUrl,
+    } as any);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       setNewPlayerName('');
       setNewPlayerGender('Male');
+      setNewPlayerBasePrice(DEFAULT_BASE_PRICE);
+      setNewPlayerPhotoUrl('');
       fetchData();
     }
   };
