@@ -259,10 +259,10 @@ export default function LiveProjector() {
   }, [currentPlayer?.current_highest_bid, currentPlayer?.current_highest_bidder_id]);
 
   useEffect(() => {
-    if (secondsLeft !== null && secondsLeft <= 5 && secondsLeft > 0 && tickedRef.current !== secondsLeft) {
-      tickedRef.current = secondsLeft;
+    if (biddingSecondsLeft !== null && biddingSecondsLeft <= 5 && biddingSecondsLeft > 0 && tickedRef.current !== biddingSecondsLeft) {
+      tickedRef.current = biddingSecondsLeft;
       playTick();
-      if (secondsLeft <= 3) {
+      if (biddingSecondsLeft <= 3) {
         playFinalThree();
         setTimerShake(true);
         setTimeout(() => setTimerShake(false), 400);
@@ -270,10 +270,10 @@ export default function LiveProjector() {
         spawnParticles(6, ['hsl(0,84%,60%)','hsl(30,100%,60%)']);
       }
     }
-    if (secondsLeft === null || secondsLeft > 5) tickedRef.current = null;
-  }, [secondsLeft]);
+    if (biddingSecondsLeft === null || biddingSecondsLeft > 5) tickedRef.current = null;
+  }, [biddingSecondsLeft]);
 
-  const urgency = secondsLeft !== null && secondsLeft <= 5;
+  const urgency = biddingSecondsLeft !== null && biddingSecondsLeft <= 5;
 
   return (
     <div className="dark min-h-screen bg-[hsl(222,47%,11%)] text-[hsl(210,40%,98%)] flex overflow-hidden relative">
