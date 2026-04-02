@@ -158,7 +158,11 @@ export default function SetupPage() {
   const addPlayer = async () => {
     if (!auctionId || !newPlayerName.trim()) return;
     let photoUrl: string | null = null;
-    if (newPlayerPhotoUrl.trim()) photoUrl = newPlayerPhotoUrl.trim();
+
+    if (newPlayerPhoto) {
+      photoUrl = await uploadPhoto(newPlayerPhoto);
+      if (!photoUrl) return;
+    }
 
     const { error } = await supabase.from('players').insert({
       auction_id: auctionId,
@@ -174,7 +178,7 @@ export default function SetupPage() {
       setNewPlayerName('');
       setNewPlayerGender('Male');
       setNewPlayerBasePrice(DEFAULT_BASE_PRICE);
-      setNewPlayerPhotoUrl('');
+      setNewPlayerPhoto(null);
       fetchData();
     }
   };
