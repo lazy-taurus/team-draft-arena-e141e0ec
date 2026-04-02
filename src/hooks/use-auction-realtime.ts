@@ -36,7 +36,7 @@ export function useAuctionRealtime(auctionId: string | undefined): AuctionRealti
       supabase.from('teams').select('*').eq('auction_id', auctionId),
       supabase.from('players').select('*').eq('auction_id', auctionId).order('name'),
       supabase.from('bids').select('*').eq('auction_id', auctionId).order('created_at', { ascending: false }).limit(20),
-    ]);
+    ]) as any;
 
     const allPlayers = allPlayersRes.data || [];
     const onBlock = allPlayers.find(p => p.status === 'on_block') || null;
