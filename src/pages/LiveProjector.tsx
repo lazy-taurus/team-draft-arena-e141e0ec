@@ -369,7 +369,7 @@ export default function LiveProjector() {
             >
               {/* Avatar */}
               <PlayerAvatar
-                photoUrl={(currentPlayer as any).photo_url}
+                photoUrl={currentPlayer.photo_url}
                 gender={currentPlayer.gender}
                 name={currentPlayer.name}
                 size="xl"
