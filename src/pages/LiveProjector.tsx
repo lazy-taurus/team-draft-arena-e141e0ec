@@ -425,25 +425,46 @@ export default function LiveProjector() {
                 )}
               </div>
 
-              {/* Timer */}
-              {secondsLeft !== null && (
-                <motion.div key={secondsLeft}
+              {/* Preview Phase */}
+              {isPreviewPhase && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="inline-flex flex-col items-center justify-center px-10 py-5 rounded-2xl backdrop-blur-xl border bg-[hsl(280,80%,60%)]/10 border-[hsl(280,80%,60%)]/30"
+                >
+                  <p className="text-sm uppercase tracking-widest text-[hsl(280,80%,70%)] font-bold mb-1">Preview Phase</p>
+                  <motion.span
+                    key={previewLeft}
+                    initial={{ scale: 1.2 }}
+                    animate={{ scale: 1 }}
+                    className="font-mono tabular-nums text-[hsl(280,80%,70%)]"
+                    style={{ fontSize: 'clamp(2rem,5vw,4rem)' }}
+                  >
+                    {previewLeft}s
+                  </motion.span>
+                  <p className="text-xs text-[hsl(280,80%,60%)] mt-1">Bidding starts soon…</p>
+                </motion.div>
+              )}
+
+              {/* Bidding Timer */}
+              {!isPreviewPhase && biddingSecondsLeft !== null && (
+                <motion.div key={biddingSecondsLeft}
                   initial={{scale:1.15}}
                   animate={timerShake ? {scale:1,x:[0,-8,8,-6,6,0]} : {scale:1}}
                   transition={timerShake ? {duration:0.35} : {}}
                   className={`inline-flex items-center justify-center font-mono tabular-nums px-8 py-4 rounded-2xl backdrop-blur-xl border transition-all ${
-                    secondsLeft<=3
+                    biddingSecondsLeft<=3
                       ? 'bg-[hsl(0,84%,60%)]/15 border-[hsl(0,84%,60%)]/50 text-[hsl(0,84%,60%)]'
-                      : secondsLeft<=5
+                      : biddingSecondsLeft<=5
                       ? 'bg-[hsl(30,100%,60%)]/10 border-[hsl(30,100%,60%)]/30 text-[hsl(30,100%,60%)]'
                       : 'bg-[hsl(210,40%,98%)]/5 border-[hsl(210,40%,98%)]/10'
                   }`}
                   style={{
                     fontSize:'clamp(2.5rem,6vw,5rem)',
-                    ...(secondsLeft<=3 ? {boxShadow:'0 0 30px hsl(0,84%,60%,0.3),inset 0 0 20px hsl(0,84%,60%,0.1)'} : {})
+                    ...(biddingSecondsLeft<=3 ? {boxShadow:'0 0 30px hsl(0,84%,60%,0.3),inset 0 0 20px hsl(0,84%,60%,0.1)'} : {})
                   }}
                 >
-                  {secondsLeft}s
+                  {biddingSecondsLeft}s
                 </motion.div>
               )}
             </motion.div>
