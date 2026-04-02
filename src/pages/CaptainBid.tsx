@@ -13,7 +13,7 @@ export default function CaptainBid() {
   const { id: auctionId } = useParams<{ id: string }>();
   const session = getCaptainSession(auctionId);
   const { auction, teams, currentPlayer, allPlayers, refetch } = useAuctionRealtime(auctionId);
-  const previewLeft = usePreviewCountdown((auction as any)?.preview_ends_at);
+  const previewLeft = usePreviewCountdown(auction?.preview_ends_at);
   const secondsLeft = useCountdown(auction?.timer_ends_at);
   const { toast } = useToast();
   const [customBid, setCustomBid] = useState('');
