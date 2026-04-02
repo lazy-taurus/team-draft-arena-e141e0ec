@@ -164,7 +164,7 @@ function TeamCard({ team, soldPlayers, maleCap, femaleCap, isHighest, isBidFlash
 export default function LiveProjector() {
   const { id: auctionId } = useParams<{ id: string }>();
   const { auction, teams, currentPlayer, recentBids, allPlayers } = useAuctionRealtime(auctionId);
-  const previewLeft = usePreviewCountdown((auction as any)?.preview_ends_at);
+  const previewLeft = usePreviewCountdown(auction?.preview_ends_at);
   const secondsLeft = useCountdown(auction?.timer_ends_at);
   const isPreviewPhase = previewLeft !== null && previewLeft > 0;
   const biddingSecondsLeft = isPreviewPhase ? null : secondsLeft;
