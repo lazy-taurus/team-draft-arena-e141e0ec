@@ -34,7 +34,7 @@ export default function SetupPage() {
   const [newPlayerName, setNewPlayerName]   = useState('');
   const [newPlayerGender, setNewPlayerGender] = useState<'Male' | 'Female'>('Male');
   const [newPlayerBasePrice, setNewPlayerBasePrice] = useState(DEFAULT_BASE_PRICE);
-  const [newPlayerPhotoUrl, setNewPlayerPhotoUrl] = useState('');
+  const [newPlayerPhoto, setNewPlayerPhoto] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -158,7 +158,11 @@ export default function SetupPage() {
   const addPlayer = async () => {
     if (!auctionId || !newPlayerName.trim()) return;
     let photoUrl: string | null = null;
-    if (newPlayerPhotoUrl.trim()) photoUrl = newPlayerPhotoUrl.trim();
+
+    if (newPlayerPhoto) {
+      photoUrl = await uploadPhoto(newPlayerPhoto);
+      if (!photoUrl) return;
+    }
 
     const { error } = await supabase.from('players').insert({
       auction_id: auctionId,
@@ -174,7 +178,7 @@ export default function SetupPage() {
       setNewPlayerName('');
       setNewPlayerGender('Male');
       setNewPlayerBasePrice(DEFAULT_BASE_PRICE);
-      setNewPlayerPhotoUrl('');
+      setNewPlayerPhoto(null);
       fetchData();
     }
   };
@@ -245,9 +249,9 @@ export default function SetupPage() {
               <CardContent className="pt-6">
                 <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-8 cursor-pointer hover:border-primary transition-colors">
                   <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">Drop a file or click to upload</span>
+                   <span className="text-sm text-muted-foreground">Drop a file or click to upload</span>
                   <span className="text-xs text-muted-foreground mt-1">
-                    CSV or Excel (.xlsx / .xls) — columns: <span className="font-mono">Name, Gender</span>
+                    CSV or Excel (.xlsx / .xls) — columns: <span className="font-mono">Name, Gender, Base Price</span> (optional)
                   </span>
                   <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} className="hidden" />
                 </label>
@@ -288,12 +292,13 @@ export default function SetupPage() {
                       min={1}
                     />
                   </div>
-                  <div className="space-y-1 flex-1 min-w-[200px]">
-                    <Label className="text-xs">Photo URL (optional)</Label>
+                  <div className="space-y-1 w-40">
+                    <Label className="text-xs">Photo (optional)</Label>
                     <Input
-                      value={newPlayerPhotoUrl}
-                      onChange={e => setNewPlayerPhotoUrl(e.target.value)}
-                      placeholder="https://… or leave blank"
+                      type="file"
+                      accept="image/*"
+                      onChange={e => setNewPlayerPhoto(e.target.files?.[0] || null)}
+                      className="text-xs"
                     />
                   </div>
                   <Button onClick={addPlayer} disabled={!newPlayerName.trim() || uploading}>
