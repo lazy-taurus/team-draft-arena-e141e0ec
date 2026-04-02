@@ -120,6 +120,7 @@ export type Database = {
           skill_tier: string | null
           status: string
           team_id: string | null
+          photo_url: string | null
         }
         Insert: {
           auction_id: string
@@ -133,6 +134,7 @@ export type Database = {
           skill_tier?: string | null
           status?: string
           team_id?: string | null
+          photo_url: string | null
         }
         Update: {
           auction_id?: string
@@ -146,6 +148,7 @@ export type Database = {
           skill_tier?: string | null
           status?: string
           team_id?: string | null
+          photo_url: string | null
         }
         Relationships: [
           {
