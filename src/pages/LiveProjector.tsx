@@ -2,9 +2,11 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuctionRealtime } from '@/hooks/use-auction-realtime';
 import { useCountdown } from '@/hooks/use-countdown';
+import { usePreviewCountdown } from '@/hooks/use-preview-countdown';
 import { useSound } from '@/hooks/use-sound';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
 
 // ─── Web-Audio synth ─────────────────────────────────────────────────────────
 function useSynth() {
