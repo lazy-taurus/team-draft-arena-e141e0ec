@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { useAuctionRealtime } from '@/hooks/use-auction-realtime';
 import { useCountdown } from '@/hooks/use-countdown';
+import { usePreviewCountdown } from '@/hooks/use-preview-countdown';
 import { AdminNavbar } from '@/components/AdminNavbar';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,10 @@ export default function AdminControl() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { auction, teams, currentPlayer, recentBids, allPlayers, refetch } = useAuctionRealtime(auctionId);
+  const previewLeft = usePreviewCountdown((auction as any)?.preview_ends_at);
   const secondsLeft = useCountdown(auction?.timer_ends_at);
+  const isPreviewPhase = previewLeft !== null && previewLeft > 0;
+  const biddingSecondsLeft = isPreviewPhase ? null : secondsLeft;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'available' | 'unsold'>('available');
