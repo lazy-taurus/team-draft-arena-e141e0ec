@@ -21,7 +21,7 @@ export default function AdminControl() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { auction, teams, currentPlayer, recentBids, allPlayers, refetch } = useAuctionRealtime(auctionId);
-  const previewLeft = usePreviewCountdown((auction as any)?.preview_ends_at);
+  const previewLeft = usePreviewCountdown(auction?.preview_ends_at);
   const secondsLeft = useCountdown(auction?.timer_ends_at);
   const isPreviewPhase = previewLeft !== null && previewLeft > 0;
   const biddingSecondsLeft = isPreviewPhase ? null : secondsLeft;
