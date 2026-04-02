@@ -258,8 +258,8 @@ export default function SetupPage() {
             <Card>
               <CardHeader><CardTitle className="text-base">Add Player Manually</CardTitle></CardHeader>
               <CardContent>
-                <div className="flex gap-3 items-end">
-                  <div className="space-y-1 flex-1">
+                <div className="flex flex-wrap gap-3 items-end">
+                  <div className="space-y-1 flex-1 min-w-[140px]">
                     <Label className="text-xs">Name</Label>
                     <Input
                       value={newPlayerName}
@@ -268,7 +268,7 @@ export default function SetupPage() {
                       placeholder="Player name"
                     />
                   </div>
-                  <div className="space-y-1 w-36">
+                  <div className="space-y-1 w-28">
                     <Label className="text-xs">Gender</Label>
                     <select
                       value={newPlayerGender}
@@ -279,7 +279,24 @@ export default function SetupPage() {
                       <option value="Female">Female</option>
                     </select>
                   </div>
-                  <Button onClick={addPlayer} disabled={!newPlayerName.trim()}>
+                  <div className="space-y-1 w-28">
+                    <Label className="text-xs">Base Price (₹)</Label>
+                    <Input
+                      type="number"
+                      value={newPlayerBasePrice}
+                      onChange={e => setNewPlayerBasePrice(parseInt(e.target.value) || DEFAULT_BASE_PRICE)}
+                      min={1}
+                    />
+                  </div>
+                  <div className="space-y-1 flex-1 min-w-[200px]">
+                    <Label className="text-xs">Photo URL (optional)</Label>
+                    <Input
+                      value={newPlayerPhotoUrl}
+                      onChange={e => setNewPlayerPhotoUrl(e.target.value)}
+                      placeholder="https://… or leave blank"
+                    />
+                  </div>
+                  <Button onClick={addPlayer} disabled={!newPlayerName.trim() || uploading}>
                     <Plus className="mr-1 h-4 w-4" /> Add
                   </Button>
                 </div>
