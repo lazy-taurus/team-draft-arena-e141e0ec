@@ -367,6 +367,15 @@ export default function LiveProjector() {
               exit={{opacity:0,y:-40,scale:0.95}} transition={{type:'spring',stiffness:300,damping:25}}
               className="text-center w-full"
             >
+              {/* Avatar */}
+              <PlayerAvatar
+                photoUrl={(currentPlayer as any).photo_url}
+                gender={currentPlayer.gender}
+                name={currentPlayer.name}
+                size="xl"
+                className="mx-auto mb-4"
+              />
+
               {/* Badge */}
               <motion.div initial={{opacity:0,x:-30}} animate={{opacity:1,x:0}} transition={{delay:0.2}} className="mb-3">
                 <motion.span
