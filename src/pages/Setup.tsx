@@ -249,9 +249,9 @@ export default function SetupPage() {
               <CardContent className="pt-6">
                 <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-8 cursor-pointer hover:border-primary transition-colors">
                   <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">Drop a file or click to upload</span>
+                   <span className="text-sm text-muted-foreground">Drop a file or click to upload</span>
                   <span className="text-xs text-muted-foreground mt-1">
-                    CSV or Excel (.xlsx / .xls) — columns: <span className="font-mono">Name, Gender</span>
+                    CSV or Excel (.xlsx / .xls) — columns: <span className="font-mono">Name, Gender, Base Price</span> (optional)
                   </span>
                   <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} className="hidden" />
                 </label>
