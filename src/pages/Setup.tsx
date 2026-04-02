@@ -33,6 +33,9 @@ export default function SetupPage() {
   const [teams, setTeams]               = useState<Team[]>([]);
   const [newPlayerName, setNewPlayerName]   = useState('');
   const [newPlayerGender, setNewPlayerGender] = useState<'Male' | 'Female'>('Male');
+  const [newPlayerBasePrice, setNewPlayerBasePrice] = useState(DEFAULT_BASE_PRICE);
+  const [newPlayerPhotoUrl, setNewPlayerPhotoUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!auctionId) return;
