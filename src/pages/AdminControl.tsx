@@ -116,12 +116,6 @@ export default function AdminControl() {
   const filtered = playerList.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
   const highestBidderTeam = teams.find(t => t.id === currentPlayer?.current_highest_bidder_id);
 
-  // Dynamic caps
-  const teamCount = teams.length || 1;
-  const malePool = allPlayers.filter(p => p.gender === 'Male').length;
-  const femalePool = allPlayers.filter(p => p.gender === 'Female').length;
-  const maleCap = Math.ceil(malePool / teamCount);
-  const femaleCap = Math.ceil(femalePool / teamCount);
 
   if (!auction) return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
 
