@@ -123,7 +123,6 @@ function TeamCard({ team, soldPlayers, maleCap, femaleCap, isHighest, isBidFlash
               BID!
             </motion.span>
           )}
-          {isLocked && <span className="text-xs">🔒</span>}
         </div>
       </div>
       <motion.p
