@@ -74,8 +74,8 @@ export default function CaptainBid() {
           </p>
         </div>
         <div className="text-right text-xs text-[hsl(215,20%,65%)]">
-          <p>Boys: {myTeam?.boys_count || 0}/{maleCap}</p>
-          <p>Girls: {myTeam?.girls_count || 0}/{femaleCap}</p>
+          <p>Boys: {myTeam?.boys_count || 0}</p>
+          <p>Girls: {myTeam?.girls_count || 0}</p>
         </div>
       </div>
 
