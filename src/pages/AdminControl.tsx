@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Play, Pause, XCircle, Gavel, Search, OctagonX, Undo2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
 
 type Player = Database['public']['Tables']['players']['Row'];
 
@@ -70,8 +71,8 @@ export default function AdminControl() {
   };
 
   const startTimer = async () => {
-    if (!auctionId) return;
-    await supabase.rpc('start_auction_timer', { p_auction_id: auctionId, p_seconds: 30 });
+    if (!auctionId || !auction) return;
+    await supabase.rpc('start_auction_timer', { p_auction_id: auctionId, p_seconds: auction.bidding_duration_seconds || 30 });
   };
 
   const pauseTimer = async () => {
@@ -174,9 +175,17 @@ export default function AdminControl() {
               <Card className="stadium-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-2xl">{currentPlayer.name}</CardTitle>
-                      <p className="text-muted-foreground">{currentPlayer.gender} · {currentPlayer.skill_tier || 'Untiered'} · Base: ₹{currentPlayer.base_price}</p>
+                    <div className="flex items-center gap-4">
+                      <PlayerAvatar 
+                        photoUrl={currentPlayer.photo_url} 
+                        gender={currentPlayer.gender} 
+                        name={currentPlayer.name} 
+                        size="lg" 
+                      />
+                      <div>
+                        <CardTitle className="text-2xl">{currentPlayer.name}</CardTitle>
+                        <p className="text-muted-foreground">{currentPlayer.gender} · {currentPlayer.skill_tier || 'Untiered'} · Base: ₹{currentPlayer.base_price}</p>
+                      </div>
                     </div>
                     {isPreviewPhase ? (
                       <div className="text-center">
