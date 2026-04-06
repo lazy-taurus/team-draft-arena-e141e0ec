@@ -49,6 +49,7 @@ export default function DashboardPage() {
         title: newTitle.trim(),
         join_code: generateJoinCode(),
         budget_per_team: newBudget,
+        bidding_duration_seconds: newBiddingDuration,
         admin_id: user.id,
       } as any)
       .select()
