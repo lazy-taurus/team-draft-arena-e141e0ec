@@ -186,8 +186,9 @@ export default function LiveProjector() {
   const highestBidderTeam = teams.find(t => t.id === currentPlayer?.current_highest_bidder_id);
   const soldPlayers       = allPlayers.filter(p => p.status === 'sold');
 
-  const leftTeams  = teams.slice(0, 2);
-  const rightTeams = teams.slice(2, 4);
+  const midPoint = Math.ceil(teams.length / 2);
+  const leftTeams  = teams.slice(0, midPoint);
+  const rightTeams = teams.slice(midPoint);
 
   const flash = useCallback((color: string) =>
     setEdgeFlash({ key: flashKeyRef.current++, color }), []);
