@@ -101,7 +101,7 @@ function TeamCard({ team, soldPlayers, maleCap, femaleCap, isHighest, isBidFlash
   return (
     <motion.div
       initial={{ opacity:0, x: side==='left' ? -30 : 30 }}
-      animate={{ opacity: isLocked ? 0.4 : 1, x:0 }}
+      animate={{ opacity: 1, x:0 }}
       transition={{ delay: idx * 0.1 }}
       className={`p-4 rounded-xl border transition-all ${
         isHighest
