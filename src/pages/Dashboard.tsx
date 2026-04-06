@@ -50,7 +50,7 @@ export default function DashboardPage() {
         join_code: generateJoinCode(),
         budget_per_team: newBudget,
         admin_id: user.id,
-      })
+      } as any)
       .select()
       .single();
 
