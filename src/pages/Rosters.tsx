@@ -250,7 +250,7 @@ export default function RostersPage() {
                       <CardHeader className="pb-2">
                         <CardTitle className="text-base">{team.name}</CardTitle>
                         <p className="text-xs text-muted-foreground">
-                          ₹{team.purse_balance.toLocaleString()} · B:{team.boys_count} G:{team.girls_count}
+                          ₹{team.purse_balance.toLocaleString()} · Boys:{team.boys_count} Girls:{team.girls_count}
                         </p>
                       </CardHeader>
                       <CardContent className="min-h-[120px]">
