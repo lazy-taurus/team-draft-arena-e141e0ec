@@ -184,12 +184,6 @@ export default function LiveProjector() {
   const flashKeyRef          = useRef(0);
 
   const highestBidderTeam = teams.find(t => t.id === currentPlayer?.current_highest_bidder_id);
-  const soldPlayers       = allPlayers.filter(p => p.status === 'sold');
-  const teamCount         = teams.length || 1;
-  const malePool          = allPlayers.filter(p => p.gender === 'Male').length;
-  const femalePool        = allPlayers.filter(p => p.gender === 'Female').length;
-  const maleCap           = Math.ceil(malePool / teamCount);
-  const femaleCap         = Math.ceil(femalePool / teamCount);
 
   const leftTeams  = teams.slice(0, 2);
   const rightTeams = teams.slice(2, 4);
