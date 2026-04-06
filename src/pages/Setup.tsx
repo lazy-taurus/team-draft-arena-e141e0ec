@@ -203,9 +203,26 @@ export default function SetupPage() {
       <header className="border-b border-border px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold">{auction.title}</h1>
-          <p className="text-sm text-muted-foreground">
-            Code: <span className="font-mono font-bold">{auction.join_code}</span>
-          </p>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-sm text-muted-foreground">
+              Code: <span className="font-mono font-bold">{auction.join_code}</span>
+            </p>
+            <div className="flex items-center gap-2 border-l pl-4 border-border">
+              <Label className="text-xs text-muted-foreground">Timer (s):</Label>
+              <Input 
+                type="number" 
+                className="w-16 h-7 text-xs" 
+                value={auction.bidding_duration_seconds || 30} 
+                onChange={async (e) => {
+                  const val = parseInt(e.target.value);
+                  if (val && auctionId) {
+                    await supabase.from('auctions').update({ bidding_duration_seconds: val } as any).eq('id', auctionId);
+                    fetchData();
+                  }
+                }} 
+              />
+            </div>
+          </div>
         </div>
         <Button onClick={goLive} className="bg-success hover:bg-success/90 text-success-foreground">
           <Rocket className="mr-2 h-4 w-4" /> Initialize Live Auction
@@ -317,6 +334,7 @@ export default function SetupPage() {
                       <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Gender</TableHead>
+                        <TableHead>Base Price</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="w-10"></TableHead>
                       </TableRow>
@@ -326,6 +344,7 @@ export default function SetupPage() {
                         <TableRow key={p.id}>
                           <TableCell className="font-medium">{p.name}</TableCell>
                           <TableCell>{p.gender}</TableCell>
+                          <TableCell>₹{p.base_price}</TableCell>
                           <TableCell>{p.status}</TableCell>
                           <TableCell>
                             {p.status === 'available' && (
