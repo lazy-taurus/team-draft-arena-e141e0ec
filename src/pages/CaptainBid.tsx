@@ -28,23 +28,8 @@ export default function CaptainBid() {
 
   const currentBid = currentPlayer?.current_highest_bid || currentPlayer?.base_price || 0;
 
-  // Dynamic caps
-  const teamCount = teams.length || 1;
-  const { maleCap, femaleCap, totalCap } = useMemo(() => {
-    const mp = allPlayers.filter(p => p.gender === 'Male').length;
-    const fp = allPlayers.filter(p => p.gender === 'Female').length;
-    const mc = Math.ceil(mp / teamCount);
-    const fc = Math.ceil(fp / teamCount);
-    return { maleCap: mc, femaleCap: fc, totalCap: mc + fc };
-  }, [allPlayers, teamCount]);
-
-  const remainingSlots = myTeam ? totalCap - (myTeam.boys_count + myTeam.girls_count) : 0;
-  const maxBid = myTeam ? myTeam.purse_balance - (Math.max(remainingSlots - 1, 0) * 200) : 0;
-
-  const isCategoryFull = currentPlayer && myTeam && (
-    (currentPlayer.gender === 'Female' && myTeam.girls_count >= femaleCap) ||
-    (currentPlayer.gender === 'Male' && myTeam.boys_count >= maleCap)
-  );
+  // Simple purse-based max bid (no roster caps)
+  const maxBid = myTeam ? myTeam.purse_balance : 0;
 
   const placeBid = async (amount: number) => {
     if (!auctionId || !session?.teamId || !currentPlayer || bidding || isPreviewPhase) return;
