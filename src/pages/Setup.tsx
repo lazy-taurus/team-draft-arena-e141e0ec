@@ -72,7 +72,7 @@ export default function SetupPage() {
       return;
     }
 
-    const { error } = await supabase.from('players').insert(inserts);
+    const { error } = await supabase.from('players').insert(inserts as any);
     if (error) {
       toast({ title: 'Upload Error', description: error.message, variant: 'destructive' });
     } else {

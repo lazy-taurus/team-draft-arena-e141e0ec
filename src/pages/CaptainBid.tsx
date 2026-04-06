@@ -136,12 +136,6 @@ export default function CaptainBid() {
               <div className="w-full py-6 rounded-2xl bg-[hsl(215,25%,20%)] text-center opacity-50">
                 <p className="text-xl font-bold text-[hsl(215,20%,65%)]">⏳ Bidding locked during preview</p>
               </div>
-            ) : isCategoryFull ? (
-              <div className="w-full py-4 rounded-xl bg-[hsl(0,84%,60%)]/15 border border-[hsl(0,84%,60%)]/30 text-center">
-                <p className="text-[hsl(0,84%,60%)] font-bold">
-                  Category Full: {currentPlayer.gender === 'Female' ? `${myTeam?.girls_count}/${femaleCap} Girls` : `${myTeam?.boys_count}/${maleCap} Boys`} Drafted
-                </p>
-              </div>
             ) : (
               <div className="w-full space-y-3">
                 <div className="grid grid-cols-2 gap-3">
