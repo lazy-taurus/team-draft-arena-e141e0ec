@@ -91,8 +91,8 @@ function EdgeFlash({ color }:{ color:string }) {
 }
 
 // ─── Team card ───────────────────────────────────────────────────────────────
-function TeamCard({ team, soldPlayers, maleCap, femaleCap, isHighest, isBidFlashing, side, idx }: {
-  team: any; soldPlayers: any[]; maleCap:number; femaleCap:number;
+function TeamCard({ team, soldPlayers, isHighest, isBidFlashing, side, idx }: {
+  team: any; soldPlayers: any[];
   isHighest:boolean; isBidFlashing:boolean; side:'left'|'right'; idx:number;
 }) {
   const teamPlayers = soldPlayers.filter(p => p.team_id === team.id);
