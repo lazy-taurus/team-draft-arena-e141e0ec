@@ -17,6 +17,7 @@ export type Database = {
       auctions: {
         Row: {
           admin_id: string
+          bidding_duration_seconds: number
           budget_per_team: number
           created_at: string
           current_player_id: string | null
@@ -29,6 +30,7 @@ export type Database = {
         }
         Insert: {
           admin_id: string
+          bidding_duration_seconds?: number
           budget_per_team?: number
           created_at?: string
           current_player_id?: string | null
@@ -41,6 +43,7 @@ export type Database = {
         }
         Update: {
           admin_id?: string
+          bidding_duration_seconds?: number
           budget_per_team?: number
           created_at?: string
           current_player_id?: string | null
