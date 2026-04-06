@@ -97,8 +97,6 @@ function TeamCard({ team, soldPlayers, maleCap, femaleCap, isHighest, isBidFlash
 }) {
   const teamPlayers = soldPlayers.filter(p => p.team_id === team.id);
   const totalPlayers = team.boys_count + team.girls_count;
-  const totalCap = maleCap + femaleCap;
-  const isLocked = totalPlayers >= totalCap;
 
   return (
     <motion.div
