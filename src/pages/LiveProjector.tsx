@@ -341,7 +341,7 @@ export default function LiveProjector() {
         <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[hsl(215,20%,55%)] mb-1">Franchises</h3>
         {leftTeams.map((team, i) => (
           <TeamCard key={team.id} team={team} soldPlayers={soldPlayers}
-            maleCap={maleCap} femaleCap={femaleCap} side="left" idx={i}
+            side="left" idx={i}
             isHighest={team.id === currentPlayer?.current_highest_bidder_id}
             isBidFlashing={team.id === bidFlashTeamId}
           />
