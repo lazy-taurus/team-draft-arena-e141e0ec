@@ -91,19 +91,17 @@ function EdgeFlash({ color }:{ color:string }) {
 }
 
 // ─── Team card ───────────────────────────────────────────────────────────────
-function TeamCard({ team, soldPlayers, maleCap, femaleCap, isHighest, isBidFlashing, side, idx }: {
-  team: any; soldPlayers: any[]; maleCap:number; femaleCap:number;
+function TeamCard({ team, soldPlayers, isHighest, isBidFlashing, side, idx }: {
+  team: any; soldPlayers: any[];
   isHighest:boolean; isBidFlashing:boolean; side:'left'|'right'; idx:number;
 }) {
   const teamPlayers = soldPlayers.filter(p => p.team_id === team.id);
   const totalPlayers = team.boys_count + team.girls_count;
-  const totalCap = maleCap + femaleCap;
-  const isLocked = totalPlayers >= totalCap;
 
   return (
     <motion.div
       initial={{ opacity:0, x: side==='left' ? -30 : 30 }}
-      animate={{ opacity: isLocked ? 0.4 : 1, x:0 }}
+      animate={{ opacity: 1, x:0 }}
       transition={{ delay: idx * 0.1 }}
       className={`p-4 rounded-xl border transition-all ${
         isHighest
@@ -125,7 +123,6 @@ function TeamCard({ team, soldPlayers, maleCap, femaleCap, isHighest, isBidFlash
               BID!
             </motion.span>
           )}
-          {isLocked && <span className="text-xs">🔒</span>}
         </div>
       </div>
       <motion.p
@@ -135,13 +132,12 @@ function TeamCard({ team, soldPlayers, maleCap, femaleCap, isHighest, isBidFlash
         ₹{team.purse_balance.toLocaleString()}
       </motion.p>
       <div className="mt-1 flex gap-2 text-[11px] text-[hsl(215,20%,65%)]">
-        <span>B: {team.boys_count}/{maleCap}</span>
-        <span>G: {team.girls_count}/{femaleCap}</span>
+        <span>Boys: {team.boys_count}</span>
+        <span>Girls: {team.girls_count}</span>
       </div>
       <div className="mt-1.5 h-1 rounded-full bg-[hsl(215,25%,22%)] overflow-hidden">
         <motion.div className="h-full rounded-full bg-[hsl(217,91%,60%)]"
-          animate={{ width:`${(totalPlayers/Math.max(totalCap,1))*100}%` }}
-          transition={{ duration:0.6, ease:'easeOut' }}
+          style={{ width: `${Math.min(totalPlayers * 10, 100)}%` }}
         />
       </div>
       {teamPlayers.length > 0 && (
@@ -189,11 +185,6 @@ export default function LiveProjector() {
 
   const highestBidderTeam = teams.find(t => t.id === currentPlayer?.current_highest_bidder_id);
   const soldPlayers       = allPlayers.filter(p => p.status === 'sold');
-  const teamCount         = teams.length || 1;
-  const malePool          = allPlayers.filter(p => p.gender === 'Male').length;
-  const femalePool        = allPlayers.filter(p => p.gender === 'Female').length;
-  const maleCap           = Math.ceil(malePool / teamCount);
-  const femaleCap         = Math.ceil(femalePool / teamCount);
 
   const leftTeams  = teams.slice(0, 2);
   const rightTeams = teams.slice(2, 4);
@@ -351,7 +342,7 @@ export default function LiveProjector() {
         <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[hsl(215,20%,55%)] mb-1">Franchises</h3>
         {leftTeams.map((team, i) => (
           <TeamCard key={team.id} team={team} soldPlayers={soldPlayers}
-            maleCap={maleCap} femaleCap={femaleCap} side="left" idx={i}
+            side="left" idx={i}
             isHighest={team.id === currentPlayer?.current_highest_bidder_id}
             isBidFlashing={team.id === bidFlashTeamId}
           />
@@ -497,7 +488,7 @@ export default function LiveProjector() {
         <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[hsl(215,20%,55%)] mb-1">Franchises</h3>
         {rightTeams.map((team, i) => (
           <TeamCard key={team.id} team={team} soldPlayers={soldPlayers}
-            maleCap={maleCap} femaleCap={femaleCap} side="right" idx={i}
+            side="right" idx={i}
             isHighest={team.id === currentPlayer?.current_highest_bidder_id}
             isBidFlashing={team.id === bidFlashTeamId}
           />

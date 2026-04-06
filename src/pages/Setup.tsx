@@ -72,7 +72,7 @@ export default function SetupPage() {
       return;
     }
 
-    const { error } = await supabase.from('players').insert(inserts);
+    const { error } = await supabase.from('players').insert(inserts as any);
     if (error) {
       toast({ title: 'Upload Error', description: error.message, variant: 'destructive' });
     } else {
@@ -191,7 +191,7 @@ export default function SetupPage() {
 
   const goLive = async () => {
     if (!auctionId) return;
-    await supabase.from('auctions').update({ status: 'live' }).eq('id', auctionId);
+    await supabase.from('auctions').update({ status: 'live' } as any).eq('id', auctionId);
     navigate(`/auction/${auctionId}/admin`);
   };
 

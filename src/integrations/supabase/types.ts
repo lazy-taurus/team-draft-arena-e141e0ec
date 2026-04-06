@@ -17,39 +17,42 @@ export type Database = {
       auctions: {
         Row: {
           admin_id: string
+          bidding_duration_seconds: number
           budget_per_team: number
           created_at: string
           current_player_id: string | null
           id: string
           join_code: string
+          preview_ends_at: string | null
           status: string
           timer_ends_at: string | null
           title: string
-          preview_ends_at: string | null 
         }
         Insert: {
           admin_id: string
+          bidding_duration_seconds?: number
           budget_per_team?: number
           created_at?: string
           current_player_id?: string | null
           id?: string
           join_code: string
+          preview_ends_at?: string | null
           status?: string
           timer_ends_at?: string | null
           title: string
-          preview_ends_at: string | null 
         }
         Update: {
           admin_id?: string
+          bidding_duration_seconds?: number
           budget_per_team?: number
           created_at?: string
           current_player_id?: string | null
           id?: string
           join_code?: string
+          preview_ends_at?: string | null
           status?: string
           timer_ends_at?: string | null
           title?: string
-          preview_ends_at: string | null 
         }
         Relationships: [
           {
@@ -120,10 +123,10 @@ export type Database = {
           gender: string
           id: string
           name: string
+          photo_url: string | null
           skill_tier: string | null
           status: string
           team_id: string | null
-          photo_url: string | null
         }
         Insert: {
           auction_id: string
@@ -134,10 +137,10 @@ export type Database = {
           gender: string
           id?: string
           name: string
+          photo_url?: string | null
           skill_tier?: string | null
           status?: string
           team_id?: string | null
-          photo_url: string | null
         }
         Update: {
           auction_id?: string
@@ -148,10 +151,10 @@ export type Database = {
           gender?: string
           id?: string
           name?: string
+          photo_url?: string | null
           skill_tier?: string | null
           status?: string
           team_id?: string | null
-          photo_url: string | null
         }
         Relationships: [
           {

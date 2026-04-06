@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuctionRealtime } from '@/hooks/use-auction-realtime';
 import { useCountdown } from '@/hooks/use-countdown';
@@ -28,23 +28,8 @@ export default function CaptainBid() {
 
   const currentBid = currentPlayer?.current_highest_bid || currentPlayer?.base_price || 0;
 
-  // Dynamic caps
-  const teamCount = teams.length || 1;
-  const { maleCap, femaleCap, totalCap } = useMemo(() => {
-    const mp = allPlayers.filter(p => p.gender === 'Male').length;
-    const fp = allPlayers.filter(p => p.gender === 'Female').length;
-    const mc = Math.ceil(mp / teamCount);
-    const fc = Math.ceil(fp / teamCount);
-    return { maleCap: mc, femaleCap: fc, totalCap: mc + fc };
-  }, [allPlayers, teamCount]);
-
-  const remainingSlots = myTeam ? totalCap - (myTeam.boys_count + myTeam.girls_count) : 0;
-  const maxBid = myTeam ? myTeam.purse_balance - (Math.max(remainingSlots - 1, 0) * 200) : 0;
-
-  const isCategoryFull = currentPlayer && myTeam && (
-    (currentPlayer.gender === 'Female' && myTeam.girls_count >= femaleCap) ||
-    (currentPlayer.gender === 'Male' && myTeam.boys_count >= maleCap)
-  );
+  // Simple purse-based max bid (no roster caps)
+  const maxBid = myTeam ? myTeam.purse_balance : 0;
 
   const placeBid = async (amount: number) => {
     if (!auctionId || !session?.teamId || !currentPlayer || bidding || isPreviewPhase) return;
@@ -89,8 +74,8 @@ export default function CaptainBid() {
           </p>
         </div>
         <div className="text-right text-xs text-[hsl(215,20%,65%)]">
-          <p>Boys: {myTeam?.boys_count || 0}/{maleCap}</p>
-          <p>Girls: {myTeam?.girls_count || 0}/{femaleCap}</p>
+          <p>Boys: {myTeam?.boys_count || 0}</p>
+          <p>Girls: {myTeam?.girls_count || 0}</p>
         </div>
       </div>
 
@@ -150,12 +135,6 @@ export default function CaptainBid() {
             {isPreviewPhase ? (
               <div className="w-full py-6 rounded-2xl bg-[hsl(215,25%,20%)] text-center opacity-50">
                 <p className="text-xl font-bold text-[hsl(215,20%,65%)]">⏳ Bidding locked during preview</p>
-              </div>
-            ) : isCategoryFull ? (
-              <div className="w-full py-4 rounded-xl bg-[hsl(0,84%,60%)]/15 border border-[hsl(0,84%,60%)]/30 text-center">
-                <p className="text-[hsl(0,84%,60%)] font-bold">
-                  Category Full: {currentPlayer.gender === 'Female' ? `${myTeam?.girls_count}/${femaleCap} Girls` : `${myTeam?.boys_count}/${maleCap} Boys`} Drafted
-                </p>
               </div>
             ) : (
               <div className="w-full space-y-3">

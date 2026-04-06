@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [newBudget, setNewBudget] = useState(10000);
+  const [newBiddingDuration, setNewBiddingDuration] = useState(30);
   const [creating, setCreating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -49,7 +50,7 @@ export default function DashboardPage() {
         join_code: generateJoinCode(),
         budget_per_team: newBudget,
         admin_id: user.id,
-      })
+      } as any)
       .select()
       .single();
 
@@ -86,6 +87,10 @@ export default function DashboardPage() {
                 <div className="space-y-2">
                   <Label>Default Team Budget</Label>
                   <Input type="number" value={newBudget} onChange={e => setNewBudget(Number(e.target.value))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Bidding Timer Duration (Seconds)</Label>
+                  <Input type="number" value={newBiddingDuration} onChange={e => setNewBiddingDuration(Number(e.target.value) || 30)} min={5} max={300} />
                 </div>
                 <Button onClick={createAuction} disabled={creating || !newTitle.trim()} className="w-full">
                   {creating ? 'Creating...' : 'Initialize'}

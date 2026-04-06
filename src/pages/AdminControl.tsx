@@ -116,12 +116,6 @@ export default function AdminControl() {
   const filtered = playerList.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
   const highestBidderTeam = teams.find(t => t.id === currentPlayer?.current_highest_bidder_id);
 
-  // Dynamic caps
-  const teamCount = teams.length || 1;
-  const malePool = allPlayers.filter(p => p.gender === 'Male').length;
-  const femalePool = allPlayers.filter(p => p.gender === 'Female').length;
-  const maleCap = Math.ceil(malePool / teamCount);
-  const femaleCap = Math.ceil(femalePool / teamCount);
 
   if (!auction) return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
 
@@ -254,8 +248,8 @@ export default function AdminControl() {
                   <p className="font-medium text-sm">{team.name}</p>
                   <p className="text-lg font-mono font-bold tabular-nums text-primary">₹{team.purse_balance.toLocaleString()}</p>
                   <div className="flex gap-2 text-xs text-muted-foreground mt-1">
-                    <span>B:{team.boys_count}/{maleCap}</span>
-                    <span>G:{team.girls_count}/{femaleCap}</span>
+                    <span>Boys: {team.boys_count}</span>
+                    <span>Girls: {team.girls_count}</span>
                   </div>
                   {teamPlayers.length > 0 && (
                     <div className="mt-2 space-y-1">
