@@ -132,13 +132,12 @@ function TeamCard({ team, soldPlayers, maleCap, femaleCap, isHighest, isBidFlash
         ₹{team.purse_balance.toLocaleString()}
       </motion.p>
       <div className="mt-1 flex gap-2 text-[11px] text-[hsl(215,20%,65%)]">
-        <span>B: {team.boys_count}/{maleCap}</span>
-        <span>G: {team.girls_count}/{femaleCap}</span>
+        <span>Boys: {team.boys_count}</span>
+        <span>Girls: {team.girls_count}</span>
       </div>
       <div className="mt-1.5 h-1 rounded-full bg-[hsl(215,25%,22%)] overflow-hidden">
         <motion.div className="h-full rounded-full bg-[hsl(217,91%,60%)]"
-          animate={{ width:`${(totalPlayers/Math.max(totalCap,1))*100}%` }}
-          transition={{ duration:0.6, ease:'easeOut' }}
+          style={{ width: `${Math.min(totalPlayers * 10, 100)}%` }}
         />
       </div>
       {teamPlayers.length > 0 && (

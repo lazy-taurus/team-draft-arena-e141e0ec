@@ -248,8 +248,8 @@ export default function AdminControl() {
                   <p className="font-medium text-sm">{team.name}</p>
                   <p className="text-lg font-mono font-bold tabular-nums text-primary">₹{team.purse_balance.toLocaleString()}</p>
                   <div className="flex gap-2 text-xs text-muted-foreground mt-1">
-                    <span>B:{team.boys_count}/{maleCap}</span>
-                    <span>G:{team.girls_count}/{femaleCap}</span>
+                    <span>Boys: {team.boys_count}</span>
+                    <span>Girls: {team.girls_count}</span>
                   </div>
                   {teamPlayers.length > 0 && (
                     <div className="mt-2 space-y-1">
