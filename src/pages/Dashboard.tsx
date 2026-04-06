@@ -88,6 +88,10 @@ export default function DashboardPage() {
                   <Label>Default Team Budget</Label>
                   <Input type="number" value={newBudget} onChange={e => setNewBudget(Number(e.target.value))} />
                 </div>
+                <div className="space-y-2">
+                  <Label>Bidding Timer Duration (Seconds)</Label>
+                  <Input type="number" value={newBiddingDuration} onChange={e => setNewBiddingDuration(Number(e.target.value) || 30)} min={5} max={300} />
+                </div>
                 <Button onClick={createAuction} disabled={creating || !newTitle.trim()} className="w-full">
                   {creating ? 'Creating...' : 'Initialize'}
                 </Button>
