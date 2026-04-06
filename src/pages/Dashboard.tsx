@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [newBudget, setNewBudget] = useState(10000);
+  const [newBiddingDuration, setNewBiddingDuration] = useState(30);
   const [creating, setCreating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
