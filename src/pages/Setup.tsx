@@ -191,7 +191,7 @@ export default function SetupPage() {
 
   const goLive = async () => {
     if (!auctionId) return;
-    await supabase.from('auctions').update({ status: 'live' }).eq('id', auctionId);
+    await supabase.from('auctions').update({ status: 'live' } as any).eq('id', auctionId);
     navigate(`/auction/${auctionId}/admin`);
   };
 
