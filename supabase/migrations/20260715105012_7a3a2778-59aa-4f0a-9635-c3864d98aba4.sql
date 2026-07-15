@@ -1,0 +1,1 @@
+GRANT SELECT (admin_id) ON public.auctions TO authenticated;
